@@ -1,30 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Brycee Trades</title>
-    </head>
-    <body>
+<title>Brycee Trades</title>
+<style>
+body{
+    font-family:Arial,sans-serif;
+        text-align:center;
+            padding-top:100px;
+            }
+            button{
+                font-size:20px;
+                    padding:15px 30px;
+                    }
+                    </style>
+                    </head>
+                    <body>
 
-        <h1>Brycee Trades</h1>
+                    <h1>Brycee Trades</h1>
 
-            <button onclick="connectDeriv()">
+                    <button id="loginBtn">
                     Connect Deriv Account
-                        </button>
+                    </button>
 
-                            <script>
-                                    function connectDeriv() {
+                    <script>
+                    document.getElementById("loginBtn").addEventListener("click", function() {
+                        window.location.href =
+                            "https://oauth.deriv.com/oauth2/authorize?app_id=33yMrZBIMziNyVi9bMf2r";
+                            });
+                            </script>
 
-                                                const appId = "33yMrZBIMziNyVi9bMf2r";
-
-                                                            const redirectUri =
-                                                                        "https://bryceetrades.github.io/bryceetrades/";
-
-                                                                                    const url =
-                                                                                                `https://oauth.deriv.com/oauth2/authorize?app_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-
-                                                                                                            window.location.href = url;
-                                                                                                                    }
-                                                                                                                        </script>
-
-                                                                                                                        </body>
-                                                                                                                        </html>
+                            </body>
+                            </html>
