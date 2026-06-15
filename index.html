@@ -1,40 +1,14 @@
-<!DOCTYPE html>
-<html>
-<head>
-<title>Brycee Trades</title>
+<h1>Brycee Trades</h1>
 
-<style>
-body{
-    background:#0f172a;
-        color:white;
-            font-family:Arial,sans-serif;
-                text-align:center;
-                    padding-top:100px;
-                    }
+<p>Connect your Deriv account.</p>
 
-                    h1{
-                        color:#38bdf8;
-                        }
+<button onclick="login()">Login with Deriv</button>
 
-                        button{
-                            background:#38bdf8;
-                                color:white;
-                                    border:none;
-                                        padding:12px 25px;
-                                            border-radius:8px;
-                                                font-size:18px;
-                                                }
-                                                </style>
+<div id="status"></div>
 
-                                                </head>
-
-                                                <body>
-
-                                                <h1>Welcome to Brycee Trades</h1>
-
-                                                <p>My Deriv trading platform is under development.</p>
-
-                                                <button>Get Started</button>
-
-                                                </body>
-                                                </html>
+<script>
+function login() {
+    document.getElementById("status").innerHTML =
+            "Deriv connection coming soon...";
+            }
+            </script>
