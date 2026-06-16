@@ -5,20 +5,23 @@
     </head>
     <body>
 
-    <h1>Brycee Trades</h1>
+        <h1>Brycee Trades</h1>
 
-    <button onclick="connectDeriv()">
-        Connect Deriv Account
-        </button>
+            <button onclick="connectDeriv()">
+                    Connect Deriv Account
+                        </button>
 
-        <script>
-        function connectDeriv() {
-            const appId = "33yMrZBIMziNyVi9bMf2r";
+                            <p id="status"></p>
 
-                window.location.href =
-                        "https://oauth.deriv.com/oauth2/authorize?app_id=" + appId;
-                        }
-                        </script>
+                                <script>
+                                        function connectDeriv() {
+                                                    window.location.href =
+                                                                    "https://oauth.deriv.com/oauth2/authorize?app_id=33yMrZBIMziNyVi9bMf2r";
+                                                                            }
 
-                        </body>
-                        </html>
+                                                                                    document.getElementById("status").innerText =
+                                                                                                "Current URL: " + window.location.href;
+                                                                                                    </script>
+
+                                                                                                    </body>
+                                                                                                    </html>
