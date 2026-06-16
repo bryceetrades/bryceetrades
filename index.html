@@ -1,40 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Brycee Trades</title>
-    </head>
+<title>Brycee Trades</title>
+</head>
 
-    <body>
+<body>
 
-    <h1>Brycee Trades</h1>
+<h1>Brycee Trades</h1>
 
-    <button onclick="connectDeriv()">
-        Connect Deriv Account
-        </button>
+<a href="https://oauth.deriv.com/oauth2/authorize?app_id=33yMrZBIMziNyVi9bMf2r">
+    <button>Connect Deriv Account</button>
+    </a>
 
-        <p id="status"></p>
+    <p id="status"></p>
 
-        <script>
+    <script>
+    const params = new URLSearchParams(window.location.search);
 
-        function connectDeriv() {
-            const appId = "33yMrZBIMziNyVi9bMf2r";
+    if (
+        params.get("token1") ||
+            params.get("acct1") ||
+                window.location.hash
+                ) {
+                    document.getElementById("status").innerHTML =
+                            "✅ Deriv account connected successfully!";
+                            }
+                            </script>
 
-                window.location.href =
-                        "https://oauth.deriv.com/oauth2/authorize?app_id=" + appId;
-                        }
-
-                        const params = new URLSearchParams(window.location.search);
-
-                        if (
-                            params.get("token1") ||
-                                params.get("acct1") ||
-                                    window.location.hash
-                                    ) {
-                                        document.getElementById("status").innerHTML =
-                                                "✅ Deriv account connected successfully!";
-                                                }
-
-                                                </script>
-
-                                                </body>
-                                                </html>
+                            </body>
+                            </html>
