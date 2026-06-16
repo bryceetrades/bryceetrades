@@ -7,18 +7,22 @@
 
 <h1>Brycee Trades</h1>
 
-<button onclick="showMessage()">
+<button onclick="connectDeriv()">
 Connect Deriv Account
 </button>
 
 <p id="status"></p>
 
 <script>
-function showMessage() {
-    document.getElementById("status").innerHTML =
-        "Button works successfully!";
-        }
-        </script>
+function connectDeriv() {
 
-        </body>
-        </html>
+    document.getElementById("status").innerHTML =
+        "Connecting to Deriv...";
+
+            window.location.href =
+                "https://oauth.deriv.com/oauth2/authorize?app_id=33yMrZBIMziNyVi9bMf2r";
+                }
+                </script>
+
+                </body>
+                </html>
