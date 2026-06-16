@@ -1,27 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Brycee Trades</title>
-    </head>
-    <body>
+<title>Brycee Trades</title>
+</head>
+<body>
 
-        <h1>Brycee Trades</h1>
+<h1>Brycee Trades</h1>
 
-            <button onclick="connectDeriv()">
-                    Connect Deriv Account
-                        </button>
+<button onclick="showMessage()">
+Connect Deriv Account
+</button>
 
-                            <p id="status"></p>
+<p id="status"></p>
 
-                                <script>
-                                        function connectDeriv() {
-                                                    window.location.href =
-                                                                    "https://oauth.deriv.com/oauth2/authorize?app_id=33yMrZBIMziNyVi9bMf2r";
-                                                                            }
+<script>
+function showMessage() {
+    document.getElementById("status").innerHTML =
+        "Button works successfully!";
+        }
+        </script>
 
-                                                                                    document.getElementById("status").innerText =
-                                                                                                "Current URL: " + window.location.href;
-                                                                                                    </script>
-
-                                                                                                    </body>
-                                                                                                    </html>
+        </body>
+        </html>
