@@ -8,24 +8,23 @@
 
 <h1>Brycee Trades</h1>
 
-<a href="https://oauth.deriv.com/oauth2/authorize?app_id=33yMrZBIMziNyVi9bMf2r">
-    <button>Connect Deriv Account</button>
-    </a>
+<button onclick="connectDeriv()">
+Connect Deriv Account
+</button>
 
-    <p id="status"></p>
+<h3 id="result">Not connected</h3>
 
-    <script>
-    const params = new URLSearchParams(window.location.search);
+<script>
 
-    if (
-        params.get("token1") ||
-            params.get("acct1") ||
-                window.location.hash
-                ) {
-                    document.getElementById("status").innerHTML =
-                            "✅ Deriv account connected successfully!";
-                            }
-                            </script>
+function connectDeriv() {
+    window.location.href =
+        "https://oauth.deriv.com/oauth2/authorize?app_id=33yMrZBIMziNyVi9bMf2r";
+        }
 
-                            </body>
-                            </html>
+        document.getElementById("result").innerText =
+        "Current URL: " + window.location.href;
+
+        </script>
+
+        </body>
+        </html>
