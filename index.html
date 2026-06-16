@@ -5,95 +5,108 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="font-family:Arial; text-align:center; padding:40px; background:#f5f5f5;">
+<body style="font-family:Arial; text-align:center; padding:40px; background:#fff;">
 
 <h1>Brycee Trades</h1>
+<p>Step 1: Click button below</p>
 
-<button id="loginBtn" onclick="connectDeriv()" style="padding:12px 24px; font-size:16px; cursor:pointer;">
+<button id="loginBtn" style="padding:15px 30px; font-size:18px; background:blue; color:white; border:none; border-radius:8px;">
 Connect Deriv Account
 </button>
 
-<p id="status" style="margin-top:20px; word-break:break-all;"></p>
+<p id="status" style="margin-top:30px; font-size:14px; word-break:break-all; color:red;"></p>
 
 <div id="accountInfo" style="margin-top:30px; display:none;">
-  <h3>Account Details</h3>
+  <h3>✅ Connected</h3>
     <p><b>Balance:</b> <span id="balance">Loading...</span></p>
-      <button onclick="logout()" style="padding:8px 16px; margin-top:10px;">Logout</button>
+      <button onclick="logout()" style="padding:8px 16px;">Logout</button>
       </div>
 
       <script>
-      // FIXED: Use your full App ID from Deriv dashboard
       const APP_ID = "33yMrZBIMziNyVi9bMf2r"; 
       const REDIRECT_URI = "https://bryceetrades.github.io/bryceetrades/";
-      let ws = null;
 
-      window.onload = function() {
-        const hash = window.location.hash.substring(1);
-          const params = new URLSearchParams(hash);
-            const token = params.get('token1') || params.get('token');
-              
-                if (token) {
-                    localStorage.setItem('deriv_token', token);
-                        window.location.hash = "";
-                          }
-                            
-                              const savedToken = localStorage.getItem('deriv_token');
-                                if (savedToken) {
-                                    document.getElementById("loginBtn").style.display = "none";
-                                        document.getElementById("accountInfo").style.display = "block";
-                                            getBalance(savedToken);
-                                              }
-                                              }
+      // Use addEventListener instead of onclick - more reliable on mobile
+      document.getElementById("loginBtn").addEventListener("click", function() {
+        alert("1. Button clicked"); // If you don't see this, button is broken
+          
+            const oauthUrl = "https://oauth.deriv.com/oauth2/authorize" + 
+                "?app_id=" + APP_ID + 
+                    "&redirect_uri=" + encodeURIComponent(REDIRECT_URI) + 
+                        "&scope=read,trade" +
+                            "&response_type=token";
+                                
+                                  document.getElementById("status").innerHTML = "2. Redirecting to:<br>" + oauthUrl;
+                                    
+                                      alert("2. About to redirect"); // Tap OK to continue
+                                        
+                                          setTimeout(function() {
+                                              window.location.href = oauthUrl;
+                                                }, 500);
+                                                });
 
-                                              function connectDeriv() {
-                                                document.getElementById("status").innerHTML = "Redirecting to Deriv...";
-                                                  
-                                                    const oauthUrl = "https://oauth.deriv.com/oauth2/authorize" + 
-                                                        "?app_id=" + APP_ID + 
-                                                            "&redirect_uri=" + encodeURIComponent(REDIRECT_URI) + 
-                                                                "&scope=read,trade" +
-                                                                    "&response_type=token";
-                                                                        
-                                                                          document.getElementById("status").innerHTML = oauthUrl; // shows URL so you can tap it
-                                                                            setTimeout(() => {
-                                                                                window.location.href = oauthUrl;
-                                                                                  }, 1000);
-                                                                                  }
+                                                // Check if returning from Deriv with token
+                                                window.onload = function() {
+                                                  const hash = window.location.hash.substring(1);
+                                                    if(hash) {
+                                                        alert("3. Got token from Deriv: " + hash.substring(0,20) + "...");
+                                                            const params = new URLSearchParams(hash);
+                                                                const token = params.get('token1') || params.get('token');
+                                                                    
+                                                                        if (token) {
+                                                                              localStorage.setItem('deriv_token', token);
+                                                                                    window.location.hash = "";
+                                                                                          document.getElementById("loginBtn").style.display = "none";
+                                                                                                document.getElementById("accountInfo").style.display = "block";
+                                                                                                      document.getElementById("status").innerHTML = "Token saved. Fetching balance...";
+                                                                                                            getBalance(token);
+                                                                                                                }
+                                                                                                                  } else {
+                                                                                                                      const savedToken = localStorage.getItem('deriv_token');
+                                                                                                                          if (savedToken) {
+                                                                                                                                document.getElementById("loginBtn").style.display = "none";
+                                                                                                                                      document.getElementById("accountInfo").style.display = "block";
+                                                                                                                                            getBalance(savedToken);
+                                                                                                                                                }
+                                                                                                                                                  }
+                                                                                                                                                  }
 
-                                                                                  function getBalance(token) {
-                                                                                    document.getElementById("status").innerHTML = "Fetching balance...";
-                                                                                      ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID);
-                                                                                        
-                                                                                          ws.onopen = function() {
-                                                                                              ws.send(JSON.stringify({ authorize: token }));
-                                                                                                };
-                                                                                                  
-                                                                                                    ws.onmessage = function(msg) {
-                                                                                                        const data = JSON.parse(msg.data);
-                                                                                                            
-                                                                                                                if (data.error) {
-                                                                                                                      document.getElementById("status").innerHTML = "Error: " + data.error.message;
-                                                                                                                            return;
-                                                                                                                                }
-                                                                                                                                    
-                                                                                                                                        if (data.msg_type === "authorize") {
-                                                                                                                                              document.getElementById("status").innerHTML = "✅ Logged in! Account: " + data.authorize.loginid;
-                                                                                                                                                    ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
-                                                                                                                                                        }
-                                                                                                                                                            
-                                                                                                                                                                if (data.msg_type === "balance") {
-                                                                                                                                                                      document.getElementById("balance").innerHTML = data.balance + " + data.currency;
-                                                                                                                                                                          }
-                                                                                                                                                                            };
-                                                                                                                                                                            }
+                                                                                                                                                  function getBalance(token) {
+                                                                                                                                                    const ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID);
+                                                                                                                                                      
+                                                                                                                                                        ws.onopen = function() {
+                                                                                                                                                            document.getElementById("status").innerHTML += "<br>4. WebSocket connected";
+                                                                                                                                                                ws.send(JSON.stringify({ authorize: token }));
+                                                                                                                                                                  };
+                                                                                                                                                                    
+                                                                                                                                                                      ws.onmessage = function(msg) {
+                                                                                                                                                                          const data = JSON.parse(msg.data);
+                                                                                                                                                                              
+                                                                                                                                                                                  if (data.error) {
+                                                                                                                                                                                        document.getElementById("status").innerHTML += "<br>Error: " + data.error.message;
+                                                                                                                                                                                              return;
+                                                                                                                                                                                                  }
+                                                                                                                                                                                                      
+                                                                                                                                                                                                          if (data.msg_type === "authorize") {
+                                                                                                                                                                                                                document.getElementById("status").innerHTML += "<br>5. Authorized: " + data.authorize.loginid;
+                                                                                                                                                                                                                      ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
+                                                                                                                                                                                                                          }
+                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                  if (data.msg_type === "balance") {
+                                                                                                                                                                                                                                        document.getElementById("balance").innerHTML = data.balance + " + data.balance.currency;
+                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                              };
+                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                  ws.onerror = function() {
+                                                                                                                                                                                                                                                      document.getElementById("status").innerHTML += "<br>WebSocket error";
+                                                                                                                                                                                                                                                        };
+                                                                                                                                                                                                                                                        }
 
-                                                                                                                                                                            function logout() {
-                                                                                                                                                                              localStorage.removeItem('deriv_token');
-                                                                                                                                                                                if (ws) ws.close();
-                                                                                                                                                                                  location.reload();
-                                                                                                                                                                                  }
-                                                                                                                                                                                  </script>
+                                                                                                                                                                                                                                                        function logout() {
+                                                                                                                                                                                                                                                          localStorage.removeItem('deriv_token');
+                                                                                                                                                                                                                                                            location.reload();
+                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                            </script>
 
-                                                                                                                                                                                  </body>
-                                                                                                                                                                                  </html>
-}
+                                                                                                                                                                                                                                                            </body>
+                                                                                                                                                                                                                                                            </html>fix deriv login button
