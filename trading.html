@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trade - Brycee Trades</title>
+<style>
+body{background:#0b0b12;color:#fff;font-family:-apple-system,Arial;margin:0;padding:15px}
+button{border:none;border-radius:10px;padding:12px;cursor:pointer;font-weight:600}
+.tab-btn{background:#1c1c2e;color:#aaa;margin-right:6px;font-size:13px}
+.tab-btn.active{background:#0057ff;color:#fff}
+.card{background:#151521;border-radius:15px;padding:15px;margin-top:15px}
+select,input{background:#1c1c2e;border:1px solid #2a2a3a;color:#fff;border-radius:8px;padding:10px;width:100%;margin-top:5px}
+.digit-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:15px 0}
+.digit-btn{background:#1c1c2e;color:#fff;padding:15px;border-radius:8px;font-size:18px}
+.digit-btn.active{background:#0057ff}
+.digit-btn span{font-size:12px;display:block;color:#888;margin-top:3px}
+.buy-btn{background:#0057ff;width:100%;padding:18px;font-size:16px;margin-top:15px;color:#fff}
+#price{font-size:40px;font-weight:700;text-align:center;margin:20px 0}
+#lastDigit{color:#0057ff}
+.toggle{background:#1c1c2e;border-radius:8px;padding:4px;display:flex;margin-top:10px}
+.toggle button{flex:1;background:transparent;color:#aaa}
+.toggle button.active{background:#0057ff;color:#fff}
+a{color:#0057ff;text-decoration:none}
+</style>
+</head>
+<body>
+
+<a href="index.html">← Back</a>
+<h2>Trade</h2>
+
+<div>
+  <button class="tab-btn active" onclick="setType('DIGITMATCH')">Match/Diff</button>
+    <button class="tab-btn" onclick="setType('DIGITOVER')">Over/Under</button>
+      <button class="tab-btn" onclick="setType('DIGITEVEN')">Even/Odd</button>
+        <button class="tab-btn" onclick="setType('CALL')">Rise/Fall</button>
+          <button class="tab-btn" onclick="setType('DIGITHIGH')">Higher/Lower</button>
+          </div>
+
+          <div class="card">
+            <label>Symbol</label>
+              <select id="symbol" onchange="changeSymbol()">
+                  <option value="R_10">Volatility 10 Index</option>
+                      <option value="R_25">Volatility 25 Index</option>
+                          <option value="R_50">Volatility 50 Index</option>
+                              <option value="R_75">Volatility 75 Index</option>
+                                  <option value="R_100" selected>Volatility 100 Index</option>
+                                      <option value="R_200">Volatility 200 Index</option>
+                                          <option value="R_300">Volatility 300 Index</option>
+                                              <option value="frxEURUSD">EURUSD</option>
+                                                  <option value="frxGBPUSD">GBPUSD</option>
+                                                    </select>
+
+                                                      <div id="price">---.<span id="lastDigit">-</span></div>
+                                                        <div style="text-align:center;color:#888;font-size:14px">Last Digit: <span id="digitDisplay">-</span></div>
+
+                                                          <div id="digitSection">
+                                                              <div style="margin-top:20px;color:#888;font-size:14px">Last digit prediction</div>
+                                                                  <div class="digit-grid" id="digitGrid"></div>
+                                                                      
+                                                                          <div class="toggle" id="matchToggle">
+                                                                                <button class="active" onclick="setMatch('MATCH')">Matches</button>
+                                                                                      <button onclick="setMatch('DIFF')">Differs</button>
+                                                                                          </div>
+                                                                                              
+                                                                                                  <div class="toggle" id="highToggle" style="display:none">
+                                                                                                        <button class="active" onclick="setHigh('HIGH')">Higher</button>
+                                                                                                              <button onclick="setHigh('LOW')">Lower</button>
+                                                                                                                  </div>
+                                                                                                                    </div>
+
+                                                                                                                      <div style="display:flex;gap:10px;margin-top:15px">
+                                                                                                                          <div style="flex:1">
+                                                                                                                                <label>Stake USD</label>
+                                                                                                                                      <input id="stake" type="number" value="10" oninput="getProposal()">
+                                                                                                                                          </div>
+                                                                                                                                              <div style="flex:1">
+                                                                                                                                                    <label>Duration</label>
+                                                                                                                                                          <input id="duration" type="number" value="5" oninput="getProposal()">
+                                                                                                                                                                <div style="font-size:12px;color:#888">Ticks</div>
+                                                                                                                                                                    </div>
+                                                                                                                                                                      </div>
+
+                                                                                                                                                                        <div class="card" style="margin-top:15px;font-size:14px">
+                                                                                                                                                                            <div style="color:#888">Prediction</div>
+                                                                                                                                                                                <div id="predictionText">Last digit will match 5</div>
+                                                                                                                                                                                    <div style="margin-top:8px;color:#888">Payout</div>
+                                                                                                                                                                                        <div id="payoutText" style="font-size:20px;font-weight:700">-- USD</div>
+                                                                                                                                                                                          </div>
+
+                                                                                                                                                                                            <button class="buy-btn" id="buyBtn" onclick="buyTrade()">Buy @ -- USD</button>
+                                                                                                                                                                                              <div id="status" style="margin-top:10px;text-align:center;font-size:14px;color:#4cd964"></div>
+                                                                                                                                                                                              </div>
+
+                                                                                                                                                                                              <script src="app.js"></script>
+                                                                                                                                                                                              <script>
+                                                                                                                                                                                              if (!token) location.href = "index.html";
+
+                                                                                                                                                                                              let currentType = 'DIGITMATCH';
+                                                                                                                                                                                              let selectedDigit = 5;
+                                                                                                                                                                                              let matchType = 'MATCH';
+                                                                                                                                                                                              let highType = 'HIGH';
+                                                                                                                                                                                              let currentSymbol = 'R_100';
+                                                                                                                                                                                              let currentPrice = 0;
+                                                                                                                                                                                              let proposalId = null;
+
+                                                                                                                                                                                              function buildDigits() {
+                                                                                                                                                                                                  const grid = document.getElementById('digitGrid');
+                                                                                                                                                                                                    grid.innerHTML = '';
+                                                                                                                                                                                                      for(let i=0; i<10; i++) {
+                                                                                                                                                                                                            grid.innerHTML += `<button class="digit-btn ${i==5?'active':''}" onclick="selectDigit(${i})">${i}</button>`;
+                                                                                                                                                                                                      }
+                                                                                                                                                                                              }
+                                                                                                                                                                                              buildDigits();
+
+                                                                                                                                                                                              ws.onopen = () => {
+                                                                                                                                                                                                  ws.send(JSON.stringify({ authorize: token }));
+                                                                                                                                                                                                    setTimeout(() => changeSymbol(), 500);
+                                                                                                                                                                                              };
+
+                                                                                                                                                                                              ws.onmessage = (msg) => {
+                                                                                                                                                                                                  const d = JSON.parse(msg.data);
+                                                                                                                                                                                                    if (d.error) { document.getElementById('status').innerText = d.error.message; return; }
+
+                                                                                                                                                                                                      if (d.msg_type === 'tick') {
+                                                                                                                                                                                                            currentPrice = d.tick.quote;
+                                                                                                                                                                                                                let priceStr = currentPrice.toFixed(2);
+                                                                                                                                                                                                                    let lastDigit = priceStr.slice(-1);
+                                                                                                                                                                                                                        document.getElementById('price').innerHTML = priceStr.slice(0,-1) + '.<span id="lastDigit">' + lastDigit + '</span>';
+                                                                                                                                                                                                                            document.getElementById('digitDisplay').innerText = lastDigit;
+                                                                                                                                                                                                                                updatePrediction();
+                                                                                                                                                                                                      }
+
+                                                                                                                                                                                                        if (d.msg_type === 'proposal') {
+                                                                                                                                                                                                              proposalId = d.proposal.id;
+                                                                                                                                                                                                                  document.getElementById('payoutText').innerText = d.proposal.payout + ' USD';
+                                                                                                                                                                                                                      document.getElementById('buyBtn').innerText = `Buy @ ${d.proposal.ask_price} USD`;
+                                                                                                                                                                                                        }
+
+                                                                                                                                                                                                          if (d.msg_type === 'buy') {
+                                                                                                                                                                                                                document.getElementById('status').innerText = '✓ Trade placed! ID: ' + d.buy.contract_id;
+                                                                                                                                                                                                                    setTimeout(() => document.getElementById('status').innerText = '', 4000);
+                                                                                                                                                                                                          }
+                                                                                                                                                                                              };
+
+                                                                                                                                                                                              function setType(type) {
+                                                                                                                                                                                                  currentType = type;
+                                                                                                                                                                                                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                                                                                                                                                                                                      event.target.classList.add('active');
+
+                                                                                                                                                                                                        if (type === 'CALL') {
+                                                                                                                                                                                                              document.getElementById('digitSection').style.display = 'none';
+                                                                                                                                                                                                                  currentType = 'CALL';
+                                                                                                                                                                                                        } else if (type === 'DIGITHIGH') {
+                                                                                                                                                                                                              document.getElementById('digitSection').style.display = 'block';
+                                                                                                                                                                                                                  document.getElementById('matchToggle').style.display = 'none';
+                                                                                                                                                                                                                      document.getElementById('highToggle').style.display = 'flex';
+                                                                                                                                                                                                        } else {
+                                                                                                                                                                                                              document.getElementById('digitSection').style.display = 'block';
+                                                                                                                                                                                                                  document.getElementById('matchToggle').style.display = 'flex';
+                                                                                                                                                                                                                      document.getElementById('highToggle').style.display = 'none';
+                                                                                                                                                                                                        }
+                                                                                                                                                                                                          updatePrediction();
+                                                                                                                                                                                                            getProposal();
+                                                                                                                                                                                              }
+
+                                                                                                                                                                                              function setMatch(m) {
+                                                                                                                                                                                                  matchType = m;
+                                                                                                                                                                                                    document.querySelectorAll('#matchToggle button').forEach(b => b.classList.remove('active'));
+                                                                                                                                                                                                      event.target.classList.add('active');
+                                                                                                                                                                                                        currentType = m === 'MATCH'? 'DIGITMATCH' : 'DIGITDIFF';
+                                                                                                                                                                                                          updatePrediction();
+                                                                                                                                                                                                            getProposal();
+                                                                                                                                                                                              }
+
+                                                                                                                                                                                              function setHigh(h) {
+                                                                                                                                                                                                  highType = h;
+                                                                                                                                                                                                    document.querySelectorAll('#highToggle button').forEach(b => b.classList.remove('active'));
+                                                                                                                                                                                                      event.target.classList.add('active');
+                                                                                                                                                                                                        currentType = h === 'HIGH'? 'DIGITHIGH' : 'DIGITLOW';
+                                                                                                                                                                                                          updatePrediction();
+                                                                                                                                                                                                            getProposal();
+                                                                                                                                                                                              }
+
+                                                                                                                                                                                              function selectDigit(d) {
+                                                                                                                                                                                                  selectedDigit = d;
+                                                                                                                                                                                                    document.querySelectorAll('.digit-btn').forEach(b => b.classList.remove('active'));
+                                                                                                                                                                                                      document.querySelectorAll('.digit-btn')[d].classList.add('active');
+                                                                                                                                                                                                        updatePrediction();
+                                                                                                                                                                                                          getProposal();
+                                                                                                                                                                                              }
+
+                                                                                                                                                                                              function changeSymbol() {
+                                                                                                                                                                                                  currentSymbol = document.getElementById('symbol').value;
+                                                                                                                                                                                                    if (ws && ws.readyState === 1) {
+                                                                                                                                                                                                          ws.send(JSON.stringify({ forget_all: "tick" }));
+                                                                                                                                                                                                              ws.send(JSON.stringify({ ticks: currentSymbol, subscribe: 1 }));
+                                                                                                                                                                                                    }
+                                                                                                                                                                                              }
+
+                                                                                                                                                                                              function updatePrediction() {
+                                                                                                                                                                                                  let text = '';
+                                                                                                                                                                                                    if (currentType === 'CALL') text = 'Price will go UP';
+                                                                                                                                                                                                      else if (currentType === 'DIGITHIGH') text = `Last digit will be HIGHER than ${selectedDigit}`;
+                                                                                                                                                                                                        else if (currentType === 'DIGITLOW') text = `Last digit will be LOWER than ${selectedDigit}`;
+                                                                                                                                                                                                          else if (currentType === 'DIGITMATCH') text = `Last digit will match ${selectedDigit}`;
+                                                                                                                                                                                                            else if (currentType === 'DIGITDIFF') text = `Last digit will differ from ${selectedDigit}`;
+                                                                                                                                                                                                              else if (currentType === 'DIGITOVER') text = `Last digit will be OVER ${selectedDigit}`;
+                                                                                                                                                                                                                else if (currentType === 'DIGITEVEN') text = `Last digit will be EVEN`;
+                                                                                                                                                                                                                  else if (currentType === 'DIGITODD') text = `Last digit will be ODD`;
+                                                                                                                                                                                                                    document.getElementById('predictionText').innerText = text;
+                                                                                                                                                                                              }
+
+                                                                                                                                                                                              function getProposal() {
+                                                                                                                                                                                                  let req = {
+                                                                                                                                                                                                        proposal: 1,
+                                                                                                                                                                                                            amount: document.getElementById('stake').value,
+                                                                                                                                                                                                                basis: "stake",
+                                                                                                                                                                                                                    contract_type: currentType,
+                                                                                                                                                                                                                        currency: CURRENCY,
+                                                                                                                                                                                                                            duration: document.getElementById('duration').value,
+                                                                                                                                                                                                                                duration_unit: "t",
+                                                                                                                                                                                                                                    symbol: currentSymbol
+                                                                                                                                                                                                  };
+                                                                                                                                                                                                    if (currentType.includes('DIGIT')) req.barrier = selectedDigit;
+                                                                                                                                                                                                      ws.send(JSON.stringify(req));
+                                                                                                                                                                                              }
+
+                                                                                                                                                                                              function buyTrade() {
+                                                                                                                                                                                                  let req = {
+                                                                                                                                                                                                        buy: proposalId,
+                                                                                                                                                                                                            price: document.getElementById('payoutText').innerText.replace(' USD','')
+                                                                                                                                                                                                  };
+                                                                                                                                                                                                    ws.send(JSON.stringify(req));
+                                                                                                                                                                                              }
+                                                                                                                                                                                              </script>
+                                                                                                                                                                                              </body></html>
+                                                                                                                                                                                                  }
+                                                                                                                                                                                              }
+                                                                                                                                                                                                  }
+                                                                                                                                                                                              }
+                                                                                                                                                                                              }
+                                                                                                                                                                                                    }
+                                                                                                                                                                                              }
+                                                                                                                                                                                              }
+                                                                                                                                                                                              }
+                                                                                                                                                                                              }
+                                                                                                                                                                                                        }
+                                                                                                                                                                                                        }
+                                                                                                                                                                                                        }
+                                                                                                                                                                                              }
+                                                                                                                                                                                                          }
+                                                                                                                                                                                                        }
+                                                                                                                                                                                                      }
+                                                                                                                                                                                              }
+                                                                                                                                                                                              }
+                                                                                                                                                                                                      }
+                                                                                                                                                                                              }
