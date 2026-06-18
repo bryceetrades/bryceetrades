@@ -1,44 +1,15 @@
 <!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Trade</title></head>
+<title>Portfolio</title></head>
 <body style="font-family:Arial; padding:20px;">
 <a href="index.html">← Back</a>
-<h2>Place Trade</h2>
-
-Symbol: <select id="symbol"><option value="R_100">Volatility 100</option><option value="frxEURUSD">EURUSD</option></select><br><br>
-Stake: <input id="stake" type="number" value="10"><br><br>
-Duration: <input id="duration" type="number" value="5"> ticks<br><br>
-
-<button onclick="buy('CALL')">Buy Rise</button>
-<button onclick="buy('PUT')">Buy Fall</button>
-<p id="status"></p>
+<h2>Open Positions</h2>
+<div id="trades">Loading...</div>
 
 <script src="app.js"></script>
 <script>
 if (!localStorage.getItem('deriv_token')) location.href = "index.html";
-
-function buy(type) {
-  const req = {
-      proposal: 1,
-          amount: document.getElementById("stake").value,
-              basis: "stake",
-                  contract_type: type,
-                      currency: localStorage.getItem('currency'),
-                          duration: document.getElementById("duration").value,
-                              duration_unit: "t",
-                                  symbol: document.getElementById("symbol").value
-                                    };
-                                      ws.send(JSON.stringify(req));
-                                        
-                                          ws.onmessage = (msg) => {
-                                              const d = JSON.parse(msg.data);
-                                                  if (d.msg_type === "proposal") {
-                                                        ws.send(JSON.stringify({ buy: d.proposal.id, price: d.proposal.ask_price }));
-                                                            }
-                                                                if (d.msg_type === "buy") {
-                                                                      document.getElementById("status").innerText = "Trade placed! ID: " + d.buy.contract_id;
-                                                                          }
-                                                                            };
-                                                                            }
-                                                                            </script>
-                                                                            </body></html>
+ws.onopen = () => ws.send(JSON.stringify({ authorize: token }));
+setTimeout(() => ws.send(JSON.stringify({ portfolio: 1 })), 1000);
+</script>
+</body></html>
