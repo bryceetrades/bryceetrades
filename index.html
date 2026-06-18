@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Portfolio</title></head>
+<title>Markets</title></head>
 <body style="font-family:Arial; padding:20px;">
 <a href="index.html">← Back</a>
-<h2>Open Positions</h2>
-<div id="trades">Loading...</div>
+<h2>Live Prices</h2>
+<div id="prices"></div>
 
 <script src="app.js"></script>
 <script>
 if (!localStorage.getItem('deriv_token')) location.href = "index.html";
-ws.onopen = () => ws.send(JSON.stringify({ authorize: token }));
-setTimeout(() => ws.send(JSON.stringify({ portfolio: 1 })), 1000);
-</script>
-</body></html>
+ws.onopen = () => {
+  ws.send(JSON.stringify({ authorize: token }));
+    ws.send(JSON.stringify({ ticks: "R_100", subscribe: 1 }));
+    };
+    </script>
+    </body></html>
