@@ -5,31 +5,26 @@
 <title>Brycee Trades</title>
 <style>
 body{background:#0b0b12;color:#fff;font-family:-apple-system,Arial;margin:0;padding:30px;text-align:center}
-.card{background:#151521;border-radius:20px;padding:30px;margin-top:40px}
+.card{background:#151521;border-radius:20px;padding:30px;margin-top:20px}
 h1{font-size:32px;margin-bottom:10px}
-#balance{font-size:48px;font-weight:700;color:#0057ff;margin:20px 0}
+#balance{font-size:48px;font-weight:700;color:#0057ff;margin:20px 0;transition:color 0.3s}
 button{background:#0057ff;color:#fff;border:none;border-radius:12px;padding:18px 40px;font-size:16px;font-weight:600;cursor:pointer;margin:10px}
 a{color:#0057ff;text-decoration:none;display:block;margin-top:20px}
+#status{font-size:14px;margin-top:10px}
 </style>
 </head>
 <body>
 <h1>Brycee Trades</h1>
 
 <div class="card">
-  <div style="color:#888">Account Balance</div>
+  <div style="color:#888">Live Balance</div>
     <div id="balance">---.--- USD</div>
       
-        <button onclick="login()" id="loginBtn">Login with Deriv</button>
+        <button onclick="login()" id="loginBtn" style="display:none">Login with Deriv</button>
           <button onclick="logout()" id="logoutBtn" style="display:none;background:#ff3b30">Logout</button>
             <a href="trading.html" id="tradeBtn" style="display:none">Go to Trading →</a>
-            </div>
+              <div id="status"></div>
+              </div>
 
-            <script src="app.js"></script>
-            <script>
-            if (token) {
-              document.getElementById('loginBtn').style.display = 'none';
-                document.getElementById('logoutBtn').style.display = 'inline-block';
-                  document.getElementById('tradeBtn').style.display = 'block';
-                  }
-                  </script>
-                  </body></html>
+              <script src="app.js"></script>
+              </body></html>
