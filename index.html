@@ -13,6 +13,7 @@
     .btn:hover { background: #b91c1c; }
     #balance { font-size: 24px; font-weight: bold; color: #22c55e; margin-top: 20px; }
     #error { color: #f87171; margin-top: 10px; font-size: 14px; }
+    #debug { color: #fbbf24; margin-top: 10px; font-size: 11px; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -21,7 +22,7 @@
     <p>Deriv Account Dashboard</p>
     
     <div id="auth">
-      <a class="btn" href="https://oauth.deriv.com/oauth2/authorize?app_id=33zqFdSUnH9jY0bjdm8Vn&redirect_uri=https://bryceetrades.vercel.app">
+      <a class="btn" href="https://oauth.deriv.com/oauth2/authorize?app_id=33zqFdSUnH9jY0bjdm8Vn&redirect_uri=https://bryceetrades-kimsmercy496-2389s-projects.vercel.app">
         Login with Deriv
       </a>
     </div>
@@ -30,6 +31,7 @@
       <p>Account Balance</p>
       <div id="balance">Loading...</div>
       <div id="error"></div>
+      <div id="debug"></div>
     </div>
   </div>
 
@@ -38,31 +40,29 @@
 
     function getToken() {
       const params = new URLSearchParams(window.location.search);
-      return params.get('token1') || params.get('token');
+      const token = params.get('token1') || params.get('token');
+      document.getElementById('debug').textContent = "URL: " + window.location.href;
+      return token;
     }
 
     async function run() {
       const token = getToken();
-      if (!token) return; // Show login button
+      if (!token) return; 
 
       document.getElementById('auth').style.display = 'none';
       document.getElementById('dashboard').style.display = 'block';
 
-      try {
-        const ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID);
-        
-        ws.onopen = () => {
-          ws.send(JSON.stringify({ authorize: token }));
-        };
-
-        ws.onmessage = (msg) => {
-          const data = JSON.parse(msg.data);
-          if (data.error) {
-            document.getElementById('error').textContent = "Error: " + data.error.message;
-            return;
-          }
-          if (data.msg_type === 'authorize') {
-            ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
-          }
-          if (data.msg_type === 'balance') {
-            document.getElementById('balance').textContent = data.balance +
+      const ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID);
+      ws.onopen = () => ws.send(JSON.stringify({ authorize: token }));
+      ws.onmessage = (msg) => {
+        const data = JSON.parse(msg.data);
+        if (data.error) { document.getElementById('error').textContent = "Deriv Error: " + data.error.message; return; }
+        if (data.msg_type === 'authorize') { ws.send(JSON.stringify({ balance: 1, subscribe: 1 })); }
+        if (data.msg_type === 'balance') { document.getElementById('balance').textContent = data.balance + " + data.balance.currency; }
+      };
+      ws.onerror = () => { document.getElementById('error').textContent = "WebSocket failed."; };
+    }
+    run();
+  </script>
+</body>
+</html>
