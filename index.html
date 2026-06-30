@@ -1,30 +1,78 @@
 <!DOCTYPE html>
-<html><head>
+<html lang="en">
+<head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Brycee Trades</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bryce Trades</title>
 <style>
-body{background:#0b0b12;color:#fff;font-family:-apple-system,Arial;margin:0;padding:30px;text-align:center}
-.card{background:#151521;border-radius:20px;padding:30px;margin-top:20px}
-h1{font-size:32px;margin-bottom:10px}
-#balance{font-size:48px;font-weight:700;color:#0057ff;margin:20px 0;transition:color 0.3s}
-button{background:#0057ff;color:#fff;border:none;border-radius:12px;padding:18px 40px;font-size:16px;font-weight:600;cursor:pointer;margin:10px}
-a{color:#0057ff;text-decoration:none;display:block;margin-top:20px}
-#status{font-size:14px;margin-top:10px}
+  body { font-family: Arial, sans-serif; background:#0e0e0e; color:#fff; text-align:center; padding:40px; }
+  #loginBtn { background:#ff444f; color:#fff; border:none; padding:14px 24px; border-radius:8px; font-size:16px; cursor:pointer; }
+  #balance { font-size:28px; margin:20px 0; }
+  .hidden { display:none; }
 </style>
 </head>
 <body>
-<h1>Brycee Trades</h1>
 
-<div class="card">
-  <div style="color:#888">Live Balance</div>
-    <div id="balance">---.--- USD</div>
-      
-        <button onclick="login()" id="loginBtn" style="display:none">Login with Deriv</button>
-          <button onclick="logout()" id="logoutBtn" style="display:none;background:#ff3b30">Logout</button>
-            <a href="trading.html" id="tradeBtn" style="display:none">Go to Trading →</a>
-              <div id="status"></div>
-              </div>
+<h1>Bryce Trades</h1>
+<div id="balance">Balance: ---.--- USD</div>
+<button id="loginBtn">Log in with Deriv</button>
+<button id="logoutBtn" class="hidden">Log out</button>
 
-              <script src="app.js"></script>
-              </body></html>
+<script>
+const APP_ID = '33zqFdSUnH9jY0bjdm8Vn'; // Your app_id
+const REDIRECT_URI = 'https://bryceetrades.vercel.app/'; // MUST match Deriv settings
+
+// 1. Login button
+document.getElementById('loginBtn').onclick = () => {
+  const url = `https://oauth.deriv.com/oauth2/authorize?app_id=${APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=read,trade`;
+  window.location.href = url;
+};
+
+// 2. Get token from URL after Deriv redirects back
+const params = new URLSearchParams(window.location.hash.substring(1));
+const token = params.get('token1'); // Demo token
+const token2 = params.get('token2'); // Real token
+
+if (token || token2) {
+  localStorage.setItem('deriv_token', token || token2);
+  localStorage.setItem('deriv_account_type', token ? 'demo' : 'real');
+  // Clean URL so token doesn't show
+  window.history.replaceState({}, document.title, "/");
+  initApp();
+} else if (localStorage.getItem('deriv_token')) {
+  initApp();
+}
+
+// 3. Logout
+document.getElementById('logoutBtn').onclick = () => {
+  localStorage.clear();
+  window.location.href = REDIRECT_URI;
+};
+
+function initApp() {
+  document.getElementById('loginBtn').classList.add('hidden');
+  document.getElementById('logoutBtn').classList.remove('hidden');
+  
+  const ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=' + APP_ID);
+  
+  ws.onopen = () => {
+    ws.send(JSON.stringify({
+      authorize: localStorage.getItem('deriv_token')
+    }));
+  };
+  
+  ws.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+    if (data.msg_type === 'authorize') {
+      document.getElementById('balance').textContent = 
+        `Balance: ${data.authorize.balance.toFixed(2)} ${data.authorize.currency}`;
+    }
+    if (data.msg_type === 'balance') {
+      document.getElementById('balance').textContent = 
+        `Balance: ${data.balance.toFixed(2)} ${data.balance.currency}`;
+    }
+  };
+}
+</script>
+</body>
+</html>
