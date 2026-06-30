@@ -1,78 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bryce Trades</title>
-<style>
-  body { font-family: Arial, sans-serif; background:#0e0e0e; color:#fff; text-align:center; padding:40px; }
-  #loginBtn { background:#ff444f; color:#fff; border:none; padding:14px 24px; border-radius:8px; font-size:16px; cursor:pointer; }
-  #balance { font-size:28px; margin:20px 0; }
-  .hidden { display:none; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bryce E Trades</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background:#0f172a; color:#e2e8f0; text-align:center; padding:40px; }
+    .card { background:#1e293b; padding:24px; border-radius:16px; max-width:400px; margin:0 auto; }
+    .btn { display:inline-block; background:#22d3ee; color:#0f172a; padding:12px 20px; border-radius:12px; text-decoration:none; font-weight:700; margin-top:12px; }
+    .balance { font-size:28px; font-weight:800; margin:12px 0; }
+    .muted { color:#94a3b8; font-size:14px; }
+  </style>
 </head>
 <body>
+  <div class="card">
+    <h1>Bryce E Trades</h1>
+    <div class="muted">Account Balance</div>
+    <div class="balance" id="balance">--.-- USD</div>
+    <div id="auth-area">
+      <a class="btn" href="https://oauth.deriv.com/oauth2/authorize?app_id=33zqFdSUnH9jY0bjdm8Vn&redirect_uri=https://bryceetrades.vercel.app">Log in with Deriv</a>
+    </div>
+  </div>
 
-<h1>Bryce Trades</h1>
-<div id="balance">Balance: ---.--- USD</div>
-<button id="loginBtn">Log in with Deriv</button>
-<button id="logoutBtn" class="hidden">Log out</button>
+  <script>
+    const APP_ID = "33zqFdSUnH9jY0bjdm8Vn";
+    const balanceEl = document.getElementById('balance');
+    const authArea = document.getElementById('auth-area');
 
-<script>
-const APP_ID = '33zqFdSUnH9jY0bjdm8Vn'; // Your app_id
-const REDIRECT_URI = 'https://bryceetrades.vercel.app/'; // MUST match Deriv settings
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
 
-// 1. Login button
-document.getElementById('loginBtn').onclick = () => {
-  const url = `https://oauth.deriv.com/oauth2/authorize?app_id=${APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=read,trade`;
-  window.location.href = url;
-};
-
-// 2. Get token from URL after Deriv redirects back
-const params = new URLSearchParams(window.location.hash.substring(1));
-const token = params.get('token1'); // Demo token
-const token2 = params.get('token2'); // Real token
-
-if (token || token2) {
-  localStorage.setItem('deriv_token', token || token2);
-  localStorage.setItem('deriv_account_type', token ? 'demo' : 'real');
-  // Clean URL so token doesn't show
-  window.history.replaceState({}, document.title, "/");
-  initApp();
-} else if (localStorage.getItem('deriv_token')) {
-  initApp();
-}
-
-// 3. Logout
-document.getElementById('logoutBtn').onclick = () => {
-  localStorage.clear();
-  window.location.href = REDIRECT_URI;
-};
-
-function initApp() {
-  document.getElementById('loginBtn').classList.add('hidden');
-  document.getElementById('logoutBtn').classList.remove('hidden');
-  
-  const ws = new WebSocket('wss://ws.derivws.com/websockets/v3?app_id=' + APP_ID);
-  
-  ws.onopen = () => {
-    ws.send(JSON.stringify({
-      authorize: localStorage.getItem('deriv_token')
-    }));
-  };
-  
-  ws.onmessage = (msg) => {
-    const data = JSON.parse(msg.data);
-    if (data.msg_type === 'authorize') {
-      document.getElementById('balance').textContent = 
-        `Balance: ${data.authorize.balance.toFixed(2)} ${data.authorize.currency}`;
+    if (token) {
+      localStorage.setItem('deriv_token', token);
+      window.history.replaceState({}, document.title, "/");
     }
-    if (data.msg_type === 'balance') {
-      document.getElementById('balance').textContent = 
-        `Balance: ${data.balance.toFixed(2)} ${data.balance.currency}`;
+
+    const storedToken = localStorage.getItem('deriv_token');
+
+    if (storedToken) {
+      authArea.innerHTML = `<a class="btn" onclick="logout()">Log out</a>`;
+      getBalance(storedToken);
     }
-  };
-}
-</script>
+
+    async function getBalance(token) {
+      try {
+        const ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
+        
+        ws.onopen = () => {
+          ws.send(JSON.stringify({ authorize: token }));
+        };
+
+        ws.onmessage = (msg) => {
+          const data = JSON.parse(msg.data);
+          
+          if (data.error) {
+            balanceEl.textContent = "Auth failed";
+            console.error(data.error);
+            return;
+          }
+
+          if (data.msg_type === 'authorize') {
+            ws.send(JSON.stringify({ balance: 1 }));
+          }
+
+          if (data.msg_type === 'balance') {
+            const bal = data.balance;
+            const currency = data.balance.currency;
+            balanceEl.textContent = `${bal} ${currency}`;
+            ws.close();
+          }
+        };
+
+      } catch (e) {
+        balanceEl.textContent = "Error";
+        console.error(e);
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('deriv_token');
+      location.reload();
+    }
+  </script>
 </body>
 </html>
