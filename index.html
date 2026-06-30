@@ -1,66 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bryce Etrades</title>
-<style>
-  body { font-family: system-ui, sans-serif; background:#0f172a; color:#e2e8f0; margin:0; display:flex; align-items:center; justify-content:center; min-height:100vh; }
-  .card { background:#1e293b; padding:24px; border-radius:16px; width:90%; max-width:380px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.3); }
-  h1 { font-size:20px; margin:0 0 16px; }
-  .btn { display:block; width:100%; padding:14px; margin:10px 0; background:#22d3ee; color:#0f172a; font-weight:700; border-radius:10px; text-decoration:none; font-size:16px; }
-  .btn:hover { background:#67e8f9; }
-  #balanceBox { display:none; margin-top:16px; padding:16px; background:#0f172a; border-radius:12px; }
-  #balance { font-size:28px; font-weight:800; color:#22d3ee; }
-  #err { color:#f87171; font-size:14px; margin-top:10px; display:none; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bryce Etrades Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0f172a; color: #e2e8f0; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    .box { background: #1e293b; padding: 30px; border-radius: 16px; text-align: center; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    h1 { color: #38bdf8; margin-bottom: 10px; }
+    p { color: #94a3b8; margin-bottom: 20px; }
+    .btn { display: block; background: #dc2626; color: white; padding: 14px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 16px; margin-top: 10px; }
+    .btn:hover { background: #b91c1c; }
+    #balance { font-size: 24px; font-weight: bold; color: #22c55e; margin-top: 20px; }
+    #error { color: #f87171; margin-top: 10px; }
+  </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Bryce Etrades Dashboard</h1>
+  <div class="box">
+    <h1>Bryce Etrades</h1>
+    <p>Deriv Account Dashboard</p>
     
-    <a href="https://oauth.deriv.com/oauth2/authorize?app_id=33zqFdSUnH9jY0bjdm8Vn&redirect_uri=https://kimsmercy496-2389s-projects.vercel.app" class="btn">Login with Deriv</a>
-
-    <div id="balanceBox">
-      <div>Account Balance</div>
-      <div id="balance">Loading...</div>
+    <div id="auth">
+      <a class="btn" href="https://oauth.deriv.com/oauth2/authorize?app_id=33zqFdSUnH9jY0bjdm8Vn&redirect_uri=https://kimsmercy496-2389s.vercel.app">
+        Login with Deriv
+      </a>
     </div>
-    <div id="err"></div>
+
+    <div id="dashboard" style="display:none;">
+      <p>Account Balance</p>
+      <div id="balance">Loading...</div>
+      <div id="error"></div>
+    </div>
   </div>
 
-<script>
-  const APP_ID = "33zqFdSUnH9jY0bjdm8Vn";
+  <script>
+    const APP_ID = "33zqFdSUnH9jY0bjdm8Vn";
 
-  // 1. Grab token from URL after Deriv redirects back
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get("token");
+    function getToken() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('token1') || params.get('token');
+    }
 
-  if (token) {
-    document.querySelector('.btn').style.display = 'none';
-    document.getElementById('balanceBox').style.display = 'block';
-    getBalance(token);
-  }
+    async function run() {
+      const token = getToken();
+      if (!token) return; // Show login button
 
-  // 2. Call Deriv API to get balance
-  async function getBalance(token) {
-    try {
-      const ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID);
-      
-      ws.onopen = () => {
-        ws.send(JSON.stringify({ authorize: token }));
-      };
+      document.getElementById('auth').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
 
-      ws.onmessage = (msg) => {
-        const data = JSON.parse(msg.data);
+      try {
+        const ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=" + APP_ID);
         
-        if (data.error) {
-          showErr(data.error.message);
-          ws.close();
-          return;
-        }
+        ws.onopen = () => {
+          ws.send(JSON.stringify({ authorize: token }));
+        };
 
-        if (data.msg_type === "authorize") {
-          ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
-        }
+        ws.onmessage = (msg) => {
+          const data = JSON.parse(msg.data);
+          if (data.error) {
+            document.getElementById('error').textContent = "Error: " + data.error.message;
+            return;
+          }
+          if (data.msg_type === 'authorize') {
+            ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
+          }
+          if (data.msg_type === 'balance') {
+            document.getElementById('balance').textContent = data.balance.balance + " + data.balance.currency;
+          }
+        };
 
-       
+        ws.onerror = () => {
+          document.getElementById('error').textContent = "WebSocket connection failed.";
+        };
+
+      } catch (e) {
+        document.getElementById('error').textContent = "Failed to connect: " + e.message;
+      }
+    }
+    run();
+  </script>
+</body>
+</html>
