@@ -12,7 +12,7 @@
     .btn { display: block; background: #dc2626; color: white; padding: 14px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 16px; margin-top: 10px; }
     .btn:hover { background: #b91c1c; }
     #balance { font-size: 24px; font-weight: bold; color: #22c55e; margin-top: 20px; }
-    #error { color: #f87171; margin-top: 10px; }
+    #error { color: #f87171; margin-top: 10px; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -21,7 +21,7 @@
     <p>Deriv Account Dashboard</p>
     
     <div id="auth">
-      <a class="btn" href="https://oauth.deriv.com/oauth2/authorize?app_id=33zqFdSUnH9jY0bjdm8Vn&redirect_uri=https://kimsmercy496-2389s.vercel.app">
+      <a class="btn" href="https://oauth.deriv.com/oauth2/authorize?app_id=33zqFdSUnH9jY0bjdm8Vn&redirect_uri=https://bryceetrades.vercel.app">
         Login with Deriv
       </a>
     </div>
@@ -65,19 +65,4 @@
             ws.send(JSON.stringify({ balance: 1, subscribe: 1 }));
           }
           if (data.msg_type === 'balance') {
-            document.getElementById('balance').textContent = data.balance.balance + " + data.balance.currency;
-          }
-        };
-
-        ws.onerror = () => {
-          document.getElementById('error').textContent = "WebSocket connection failed.";
-        };
-
-      } catch (e) {
-        document.getElementById('error').textContent = "Failed to connect: " + e.message;
-      }
-    }
-    run();
-  </script>
-</body>
-</html>
+            document.getElementById('balance').textContent = data.balance +
