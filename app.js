@@ -1,15 +1,17 @@
-const loginBtn = document.getElementById("loginBtn");
+const socket = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
 
-// Your Deriv App ID
-const APP_ID = "33zqFdSUnH9jY0bjdm8Vn";
+socket.onopen = () => {
+    console.log("Connected to Deriv");
+    
+    socket.send(JSON.stringify({
+        ticks: "R_100"
+    }));
+};
 
-loginBtn.addEventListener("click", () => {
+socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
 
-    const redirect = encodeURIComponent(window.location.origin);
-
-    const url =
-    `https://oauth.deriv.com/oauth2/authorize?app_id=${APP_ID}&l=EN&redirect_uri=${redirect}`;
-
-    window.location.href = url;
-
-});
+    if (data.tick) {
+        document.getElementById("tick").textContent = data.tick.quote;
+    }
+};
