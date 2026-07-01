@@ -1,1 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brycee Trades</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
+<header class="topbar">
+    <h1>Brycee Trades</h1>
+
+    <div class="account">
+        <span id="balance">$0.00</span>
+        <button id="loginBtn">Login with Deriv</button>
+    </div>
+</header>
+
+<main>
+
+<section class="card">
+    <h2>Account</h2>
+    <p>Name: <span id="username">Not Connected</span></p>
+    <p>Balance: <span id="accountBalance">$0.00</span></p>
+</section>
+
+<section class="card">
+    <h2>Trade Types</h2>
+
+    <select id="tradeType">
+        <option>Matches/Differs</option>
+        <option>Over/Under</option>
+        <option>Rise/Fall</option>
+        <option>Higher/Lower</option>
+    </select>
+</section>
+
+<section class="card">
+    <h2>Live Tick</h2>
+    <h1 id="tick">--</h1>
+</section>
+
+<section class="card">
+    <h2>Digit Analysis</h2>
+    <div id="analysis">
+        Waiting for live data...
+    </div>
+</section>
+
+<section class="card">
+    <button id="buyBtn">BUY</button>
+</section>
+
+</main>
+
+<script src="app.js"></script>
+
+</body>
+</html>
