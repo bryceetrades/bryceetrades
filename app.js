@@ -12,6 +12,9 @@ socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
 
     if (data.tick) {
-        document.getElementById("tick").textContent = data.tick.quote;
+        const price = data.tick.quote.toString();
+const lastDigit = price.charAt(price.length - 1);
+
+document.getElementById("tick").textContent = lastDigit;
     }
 };
