@@ -116,3 +116,10 @@ select{
     text-align:right;
     font-weight:bold;
 }
+.highest .bar{
+    background:#22c55e;
+}
+
+.lowest .bar{
+    background:#ef4444;
+}
