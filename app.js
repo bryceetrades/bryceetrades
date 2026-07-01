@@ -46,8 +46,12 @@ socket.onmessage = (event) => {
     const percentage =
     ((digitCount[i]/last100Digits.length)*100 || 0).toFixed(1);
 
-    html += `
-    <div class="digit-row">
+   const rowClass =
+    i == highestDigit ? "highest" :
+    i == lowestDigit ? "lowest" : "";
+
+html += `
+<div class="digit-row ${rowClass}"> 
         <span class="digit-label">${i}</span>
 
         <div class="bar-container">
