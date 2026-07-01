@@ -6,50 +6,96 @@
     <title>Brycee Trades</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <header class="topbar">
-    <h1>Brycee Trades</h1>
-
-    <div class="account">
-        <span id="balance">$0.00</span>
-        <button id="loginBtn">Login with Deriv</button>
+    <div>
+        <h1>Brycee Trades</h1>
+        <small>Professional Trading Dashboard</small>
     </div>
+
+    <button id="loginBtn">Login with Deriv</button>
 </header>
+
+<div class="stats">
+
+    <div class="stat-card">
+        <h4>Balance</h4>
+        <h2 id="accountBalance">$0.00</h2>
+    </div>
+
+    <div class="stat-card">
+        <h4>Market</h4>
+        <h2>R_100</h2>
+    </div>
+
+    <div class="stat-card">
+        <h4>Status</h4>
+        <h2 id="status">🟢 Live</h2>
+    </div>
+
+</div>
 
 <main>
 
-<section class="card">
-    <h2>Account</h2>
-    <p>Name: <span id="username">Not Connected</span></p>
-    <p>Balance: <span id="accountBalance">$0.00</span></p>
-</section>
+<section class="left-panel">
 
-<section class="card">
-    <h2>Trade Types</h2>
+    <div class="card">
 
-    <select id="tradeType">
-        <option>Matches/Differs</option>
-        <option>Over/Under</option>
-        <option>Rise/Fall</option>
-        <option>Higher/Lower</option>
-    </select>
-</section>
+        <h2>Live Digit</h2>
 
-<section class="card">
-    <h2>Live Tick</h2>
-    <h1 id="tick">--</h1>
-</section>
+        <div id="tick" class="live-digit">
+            -
+        </div>
 
-<section class="card">
-    <h2>Digit Analysis</h2>
-    <div id="analysis">
-        Waiting for live data...
     </div>
+
+    <div class="card">
+
+        <h2>Trade Type</h2>
+
+        <select id="tradeType">
+            <option>Matches / Differs</option>
+            <option>Over / Under</option>
+            <option>Rise / Fall</option>
+            <option>Higher / Lower</option>
+        </select>
+
+        <br><br>
+
+        <button id="buyBtn">
+            BUY
+        </button>
+
+    </div>
+
 </section>
 
-<section class="card">
-    <button id="buyBtn">BUY</button>
+<section class="right-panel">
+
+    <div class="card">
+
+        <h2>Digit Analysis</h2>
+
+        <div id="analysis">
+
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <h2>Trade Signals</h2>
+
+        <div id="signals">
+
+            Waiting for analysis...
+
+        </div>
+
+    </div>
+
 </section>
 
 </main>
