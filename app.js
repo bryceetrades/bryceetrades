@@ -14,70 +14,64 @@ socket.onmessage = (event) => {
 
     const data = JSON.parse(event.data);
 
-    if (data.tick) {
+    if (!data.tick) return;
 
-        const price = data.tick.quote.toString();
-        const lastDigit = price.charAt(price.length - 1);
+    const price = data.tick.quote.toString();
+    const lastDigit = price.charAt(price.length - 1);
 
-        document.getElementById("tick").textContent = lastDigit;
+    document.getElementById("tick").textContent = lastDigit;
 
-        last100Digits.push(lastDigit);
+    last100Digits.push(lastDigit);
 
-        if (last100Digits.length > 100) {
-            last100Digits.shift();
-        }
-
-        const digitCount = {
-            0:0,1:0,2:0,3:0,4:0,
-            5:0,6:0,7:0,8:0,9:0
-        };
-
-        last100Digits.forEach(digit => {
-            digitCount[digit]++;
-        });
-
-        let highestDigit = 0;
-        let lowestDigit = 0;
-
-        for (let i = 1; i <= 9; i++) {
-            if (digitCount[i] > digitCount[highestDigit]) {
-                highestDigit = i;
-            }
-
-            if (digitCount[i] < digitCount[lowestDigit]) {
-                lowestDigit = i;
-            }
-        }
-
-        let html = "";
-
-        for (let i = 0; i <= 9; i++) {
-
-            const percentage =
-                ((digitCount[i] / last100Digits.length) * 100 || 0).toFixed(1);
-
-            const rowClass =
-                i === highestDigit ? "highest" :
-                i === lowestDigit ? "lowest" : "";
-
-            html += `
-                <div class="digit-row ${rowClass}">
-                    <span class="digit-label">${i}</span>
-
-                    <div class="bar-container">
-                        <div class="bar" style="width:${percentage}%"></div>
-                    </div>
-
-                    <span class="digit-percent">${percentage}%</span>
-                </div>
-            `;
-        }
-
-        html += "<hr>";
-        html += `<b>Highest:</b> ${highestDigit}<br>`;
-        html += `<b>Lowest:</b> ${lowestDigit}<br>`;
-        html += `<b>Window:</b> Last ${last100Digits.length} ticks`;
-
-        document.getElementById("analysis").innerHTML = html;
+    if (last100Digits.length > 100) {
+        last100Digits.shift();
     }
+
+    const digitCount = {
+        0:0,1:0,2:0,3:0,4:0,
+        5:0,6:0,7:0,8:0,9:0
+    };
+
+    last100Digits.forEach(digit => {
+        digitCount[digit]++;
+    });
+
+    const counts = Object.values(digitCount);
+
+    const highest = Math.max(...counts);
+    const lowest = Math.min(...counts);
+
+    let html = "";
+
+    for(let i=0;i<=9;i++){
+
+        const percentage = (
+            (digitCount[i] / last100Digits.length) * 100 || 0
+        ).toFixed(1);
+
+        let rowClass = "";
+
+        if(digitCount[i] === highest){
+            rowClass = "highest";
+        }else if(digitCount[i] === lowest){
+            rowClass = "lowest";
+        }
+
+        html += `
+        <div class="digit-row ${rowClass}">
+            <span class="digit-label">${i}</span>
+
+            <div class="bar-container">
+                <div class="bar" style="width:${percentage}%"></div>
+            </div>
+
+            <span class="digit-percent">${digitCount[i]} (${percentage}%)</span>
+        </div>
+        `;
+    }
+
+    html += "<hr>";
+    html += `<b>Window:</b> Last ${last100Digits.length} ticks`;
+
+    document.getElementById("analysis").innerHTML = html;
 };
