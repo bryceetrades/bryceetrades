@@ -43,16 +43,26 @@ socket.onmessage = (event) => {
 
         for(let i=0;i<=9;i++){
 
-            const percentage =
-            ((digitCount[i]/last100Digits.length)*100 || 0).toFixed(1);
+    const percentage =
+    ((digitCount[i]/last100Digits.length)*100 || 0).toFixed(1);
 
-            html += `Digit ${i}: ${digitCount[i]} (${percentage}%)<br>`;
+    html += `
+    <div class="digit-row">
+        <span class="digit-label">${i}</span>
 
-            if(digitCount[i] > digitCount[highestDigit])
-                highestDigit = i;
+        <div class="bar-container">
+            <div class="bar" style="width:${percentage}%"></div>
+        </div>
 
-            if(digitCount[i] < digitCount[lowestDigit])
-                lowestDigit = i;
+        <span class="digit-percent">${percentage}%</span>
+    </div>
+    `;
+
+    if(digitCount[i] > digitCount[highestDigit])
+        highestDigit = i;
+
+    if(digitCount[i] < digitCount[lowestDigit])
+        lowestDigit = i;
         }
 
         html += "<hr>";
