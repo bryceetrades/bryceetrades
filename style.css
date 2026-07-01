@@ -107,8 +107,16 @@ select{
 
 .bar{
     height:100%;
-    background:#22c55e;
+    background:#3b82f6;
     transition:width .3s ease;
+}
+
+.highest .bar{
+    background:#22c55e !important;
+}
+
+.lowest .bar{
+    background:#ef4444 !important;
 }
 
 .digit-percent{
