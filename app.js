@@ -74,4 +74,19 @@ socket.onmessage = (event) => {
     html += `<b>Window:</b> Last ${last100Digits.length} ticks`;
 
     document.getElementById("analysis").innerHTML = html;
+
+let signal = "⚪ No clear signal";
+
+if (digitCount[0] + digitCount[1] + digitCount[2] + digitCount[3] >
+    digitCount[6] + digitCount[7] + digitCount[8] + digitCount[9]) {
+
+    signal = "🟢 OVER 3 is currently stronger";
+
+} else if (digitCount[6] + digitCount[7] + digitCount[8] + digitCount[9] >
+           digitCount[0] + digitCount[1] + digitCount[2] + digitCount[3]) {
+
+    signal = "🔵 UNDER 6 is currently stronger";
+}
+
+document.getElementById("signals").innerHTML = signal;
 };
