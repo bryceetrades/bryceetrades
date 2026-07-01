@@ -85,3 +85,34 @@ select{
     font-size:18px;
     padding:15px;
 }
+.digit-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin:8px 0;
+}
+
+.digit-label{
+    width:20px;
+    font-weight:bold;
+}
+
+.bar-container{
+    flex:1;
+    height:12px;
+    background:#334155;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.bar{
+    height:100%;
+    background:#22c55e;
+    transition:width .3s ease;
+}
+
+.digit-percent{
+    width:55px;
+    text-align:right;
+    font-weight:bold;
+}
