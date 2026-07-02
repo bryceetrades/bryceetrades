@@ -1,18 +1,5 @@
 // auth.js
 
-function login() {
-    const url =
-        `https://oauth.deriv.com/oauth2/authorize?app_id=${CONFIG.APP_ID}&redirect_uri=${encodeURIComponent(CONFIG.REDIRECT_URI)}&scope=read`;
-
-    window.location.href = url;
-}
-
-// Handle OAuth callback
-const params = new URLSearchParams(window.location.search);
-
-if (params.has("token1")) {
-    const token = params.get("token1");
-    localStorage.setItem("deriv_token", token);
-
-    console.log("Logged in successfully");
+async function login() {
+    alert("OAuth 2.0 login will be implemented here.");
 }
