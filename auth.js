@@ -1,47 +1,21 @@
 // auth.js
 
-const AUTH_URL = "https://oauth.deriv.com/oauth2/authorize";
-
-function randomString(length) {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
-    let result = "";
-
-    const array = new Uint8Array(length);
-    crypto.getRandomValues(array);
-
-    for (let i = 0; i < length; i++) {
-        result += chars[array[i] % chars.length];
-    }
-
-    return result;
-}
-
-async function sha256(text) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(text);
-    return await crypto.subtle.digest("SHA-256", data);
-}
-
-function base64url(buffer) {
-    return btoa(String.fromCharCode(...new Uint8Array(buffer)))
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=/g, "");
-}
-
-async function login() {
-    const verifier = randomString(64);
-    localStorage.setItem("pkce_verifier", verifier);
-
-    const challenge = base64url(await sha256(verifier));
-
+function login() {
     const url =
-        `${AUTH_URL}?app_id=${CONFIG.APP_ID}` +
-        `&redirect_uri=${encodeURIComponent(CONFIG.REDIRECT_URI)}` +
-        `&response_type=code` +
-        `&code_challenge=${challenge}` +
-        `&code_challenge_method=S256` +
-        `&scope=read`;
+        `https://oauth.deriv.com/oauth2/authorize?app_id=${CONFIG.APP_ID}&redirect_uri=${encodeURIComponent(CONFIG.REDIRECT_URI)}`;
 
     window.location.href = url;
+}
+
+// Handle redirect after login
+const params = new URLSearchParams(window.location.search);
+
+if (params.has("token1")) {
+    const token = params.get("token1");
+    localStorage.setItem("deriv_token", token);
+
+    console.log("SUCCESS! Token:", token);
+
+    // Remove token from URL
+    window.history.replaceState({}, document.title, "/");
 }
