@@ -2,7 +2,7 @@
 
 function login() {
     const url =
-        `https://oauth.deriv.com/oauth2/authorize?app_id=${APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+        `https://oauth.deriv.com/oauth2/authorize?app_id=${CONFIG.APP_ID}&redirect_uri=${encodeURIComponent(CONFIG.REDIRECT_URI)}&scope=read`;
 
     window.location.href = url;
 }
