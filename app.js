@@ -1,4 +1,4 @@
-const APP_ID = "33zqFdSUnH9jY0bjdm8Vn";
+const APP_ID = CONFIG.APP_ID;
 const REDIRECT_URI = "https://bryceetrades-kimsmercy496-2389s-projects.vercel.app";
 
 // =====================
