@@ -1,21 +1,46 @@
-// auth.js
+const AUTH_URL = "https://oauth.deriv.com/oauth2/authorize";
 
-function login() {
-    const url =
-        `https://oauth.deriv.com/oauth2/authorize?app_id=${CONFIG.APP_ID}&redirect_uri=${encodeURIComponent(CONFIG.REDIRECT_URI)}`;
+function randomString(length) {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "";
+    const array = new Uint8Array(length);
+    crypto.getRandomValues(array);
 
-    window.location.href = url;
+    for (let i = 0; i < length; i++) {
+        result += chars[array[i] % chars.length];
+    }
+
+    return result;
 }
 
-// Handle redirect after login
-const params = new URLSearchParams(window.location.search);
+async function sha256(text) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    const hash = await crypto.subtle.digest("SHA-256", data);
+    return hash;
+}
 
-if (params.has("token1")) {
-    const token = params.get("token1");
-    localStorage.setItem("deriv_token", token);
+function base64url(buffer) {
+    return btoa(String.fromCharCode(...new Uint8Array(buffer)))
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+}
 
-    console.log("SUCCESS! Token:", token);
+async function login() {
+    const verifier = randomString(64);
 
-    // Remove token from URL
-    window.history.replaceState({}, document.title, "/");
+    localStorage.setItem("pkce_verifier", verifier);
+
+    const challenge = base64url(await sha256(verifier));
+
+    const url =
+        `${AUTH_URL}?app_id=${CONFIG.APP_ID}` +
+        `&redirect_uri=${encodeURIComponent(CONFIG.REDIRECT_URI)}` +
+        `&response_type=code` +
+        `&code_challenge=${challenge}` +
+        `&code_challenge_method=S256` +
+        `&scope=read`;
+
+    window.location.href = url;
 }
