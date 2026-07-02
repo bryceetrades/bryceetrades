@@ -10,7 +10,7 @@ document.getElementById("loginBtn").addEventListener("click", () => {
     const oauthUrl =
         `https://oauth.deriv.com/oauth2/authorize?app_id=${APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
 
-    window.location.href = oauthUrl;
+    login();
 
 });
 
