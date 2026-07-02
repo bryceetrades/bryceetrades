@@ -6,12 +6,7 @@ const REDIRECT_URI = "https://bryceetrades-kimsmercy496-2389s-projects.vercel.ap
 // =====================
 
 document.getElementById("loginBtn").addEventListener("click", () => {
-
-    const oauthUrl =
-        `https://oauth.deriv.com/oauth2/authorize?app_id=${APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
-
     login();
-
 });
 
 // =====================
