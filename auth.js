@@ -79,6 +79,6 @@ document.getElementById("loginBtn").addEventListener("click", login);
         alert("✅ Login Successful");
     } else {
         alert("❌ Login failed");
-        console.log(data);
+        alert(JSON.stringify(data));
     }
 })();
