@@ -19,26 +19,7 @@ export default async function handler(req, res) {
         })
     });
 
-    const accounts = await fetch("https://api.derivws.com/trading/v1/options/accounts", {
-    headers: {
-        "Authorization": `Bearer ${data.access_token}`,
-        "Deriv-App-ID": "33zqFdSUnH9jY0bjdm8Vn"
-    }
-});
+    const data = await response.json();
 
-const data = await response.json();
-const accountsData = await accounts.json();
-
-console.log(accountsData);
-
-    const accounts = await fetch("https://api.deriv.com/trading/v1/options/accounts", {
-    headers: {
-        Authorization: `Bearer ${data.access_token}`,
-        "Deriv-App-ID": "33zqFdSUnH9jY0bjdm8Vn"
-    }
-});
-
-const result = await accounts.json();
-
-res.status(200).json(result);
+    return res.status(response.status).json(data);
 }
