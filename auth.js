@@ -1,4 +1,4 @@
-const AUTH_URL = "https://oauth.deriv.com/oauth2/authorize";
+const AUTH_URL = "https://auth.deriv.com/oauth2/auth";
 
 function randomString(length) {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -29,18 +29,30 @@ function base64url(buffer) {
 
 async function login() {
     const verifier = randomString(64);
-
     localStorage.setItem("pkce_verifier", verifier);
 
     const challenge = base64url(await sha256(verifier));
 
+    const state = randomString(32);
+
     const url =
-        `${AUTH_URL}?app_id=${CONFIG.APP_ID}` +
+        `${AUTH_URL}?client_id=${CONFIG.APP_ID}` +
         `&redirect_uri=${encodeURIComponent(CONFIG.REDIRECT_URI)}` +
         `&response_type=code` +
+        `&scope=trade account_manage` +
+        `&state=${state}` +
         `&code_challenge=${challenge}` +
-        `&code_challenge_method=S256` +
-        `&scope=read`;
+        `&code_challenge_method=S256`;
 
     window.location.href = url;
+}
+
+const params = new URLSearchParams(window.location.search);
+
+if (params.has("code")) {
+    console.log("Authorization Code:", params.get("code"));
+    document.body.insertAdjacentHTML(
+        "beforeend",
+        `<p style="color:green">Authorization Code received successfully.</p>`
+    );
 }
