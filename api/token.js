@@ -15,7 +15,7 @@ export default async function handler(req, res) {
             client_id: "33zqFdSUnH9jY0bjdm8Vn",
             code,
             code_verifier: verifier,
-            redirect_uri: "https://bryceetrades-kimsmercy496-2389s-projects.vercel.app/"
+            redirect_uri: "https://bryceetrades-kimsmercy496-2389s-projects.vercel.app"
         })
     });
 
