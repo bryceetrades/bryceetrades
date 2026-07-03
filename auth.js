@@ -32,7 +32,6 @@ async function login() {
     localStorage.setItem("pkce_verifier", verifier);
 
     const challenge = base64url(await sha256(verifier));
-
     const state = randomString(32);
 
     const url =
@@ -47,12 +46,39 @@ async function login() {
     window.location.href = url;
 }
 
-const params = new URLSearchParams(window.location.search);
+document.getElementById("loginBtn").addEventListener("click", login);
 
-if (params.has("code")) {
-    console.log("Authorization Code:", params.get("code"));
-    document.body.insertAdjacentHTML(
-        "beforeend",
-        `<p style="color:green">Authorization Code received successfully.</p>`
-    );
-}
+(async () => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (!params.has("code")) return;
+
+    const code = params.get("code");
+    const verifier = localStorage.getItem("pkce_verifier");
+
+    const response = await fetch("/api/token", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            code,
+            verifier
+        })
+    });
+
+    const data = await response.json();
+
+    console.log(data);
+
+    if (data.access_token) {
+        localStorage.setItem("deriv_token", data.access_token);
+
+        window.history.replaceState({}, "", "/");
+
+        alert("✅ Login Successful");
+    } else {
+        alert("❌ Login failed");
+        console.log(data);
+    }
+})();
