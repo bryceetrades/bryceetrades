@@ -44,7 +44,20 @@ socket.onmessage = (event) => {
 
     const data = JSON.parse(event.data);
 
-    if (!data.tick) return;
+// Successful authorization
+if (data.authorize) {
+    document.getElementById("status").textContent =
+        `🟢 ${data.authorize.loginid} | Balance: ${data.authorize.balance} ${data.authorize.currency}`;
+    return;
+}
+
+// Authorization error
+if (data.error) {
+    console.log(data.error);
+    return;
+}
+
+if (!data.tick) return;
 
     const digit = Number(
         data.tick.quote.toString().slice(-1)
