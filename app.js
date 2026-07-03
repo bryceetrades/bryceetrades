@@ -28,7 +28,11 @@ socket.onopen = () => {
 
     const token = localStorage.getItem("deriv_token");
 
+console.log("Token:", token);
+
 if (token) {
+    console.log("Sending authorize...");
+
     socket.send(JSON.stringify({
         authorize: token
     }));
@@ -43,6 +47,7 @@ socket.send(JSON.stringify({
 socket.onmessage = (event) => {
 
     const data = JSON.parse(event.data);
+    console.log(data);
 
 // Successful authorization
 if (data.authorize) {
