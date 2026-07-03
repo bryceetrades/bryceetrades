@@ -26,9 +26,17 @@ socket.onopen = () => {
 
     console.log("Connected");
 
+    const token = localStorage.getItem("deriv_token");
+
+if (token) {
     socket.send(JSON.stringify({
-        ticks: "R_100"
+        authorize: token
     }));
+}
+
+socket.send(JSON.stringify({
+    ticks: CONFIG.SYMBOL
+}));
 
 };
 
