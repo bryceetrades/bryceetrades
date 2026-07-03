@@ -47,7 +47,9 @@ socket.send(JSON.stringify({
 socket.onmessage = (event) => {
 
     const data = JSON.parse(event.data);
-    console.log(data);
+    if (data.authorize || data.error) {
+    alert(JSON.stringify(data, null, 2));
+}
 
 // Successful authorization
 if (data.authorize) {
