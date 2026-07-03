@@ -48,7 +48,7 @@ socket.onmessage = (event) => {
 
     const data = JSON.parse(event.data);
     if (data.authorize || data.error) {
-    alert(JSON.stringify(data, null, 2));
+    document.body.innerHTML = "<pre>" + JSON.stringify(data, null, 2) + "</pre>";
 }
 
 // Successful authorization
