@@ -31,5 +31,14 @@ const accountsData = await accounts.json();
 
 console.log(accountsData);
 
-    res.status(response.status).json(data);
+    const accounts = await fetch("https://api.deriv.com/trading/v1/options/accounts", {
+    headers: {
+        Authorization: `Bearer ${data.access_token}`,
+        "Deriv-App-ID": "33zqFdSUnH9jY0bjdm8Vn"
+    }
+});
+
+const result = await accounts.json();
+
+res.status(200).json(result);
 }
