@@ -77,6 +77,9 @@ document.getElementById("loginBtn").addEventListener("click", login);
         window.history.replaceState({}, "", "/");
 
         alert("✅ Login Successful");
+
+// Go to dashboard
+window.location.href = "index.html";
     } else {
         alert("❌ Login failed");
         alert(JSON.stringify(data));
