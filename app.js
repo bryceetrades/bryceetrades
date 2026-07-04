@@ -24,7 +24,15 @@ let signalLocked = false;
 
 socket.onopen = () => {
 
-    console.log("Connected");
+    const account = JSON.parse(localStorage.getItem("deriv_account"));
+
+if (account) {
+    document.getElementById("accountBalance").textContent =
+        `${account.balance} ${account.currency}`;
+
+    document.getElementById("status").textContent =
+        `🟢 ${account.account_id}`;
+}
 
     // OAuth integration will be added later.
 // Do not authorize yet.
