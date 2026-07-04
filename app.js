@@ -26,17 +26,8 @@ socket.onopen = () => {
 
     console.log("Connected");
 
-    const token = localStorage.getItem("deriv_token");
-
-console.log("Token:", token);
-
-if (token) {
-    console.log("Sending authorize...");
-
-    socket.send(JSON.stringify({
-        authorize: token
-    }));
-}
+    // OAuth integration will be added later.
+// Do not authorize yet.
 
 socket.send(JSON.stringify({
     ticks: CONFIG.SYMBOL
