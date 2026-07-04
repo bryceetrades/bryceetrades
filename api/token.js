@@ -5,7 +5,7 @@ export default async function handler(req, res) {
 
     const { code, verifier } = req.body;
 
-    const response = await fetch("https://auth.deriv.com/oauth2/token", {
+    const tokenResponse = await fetch("https://auth.deriv.com/oauth2/token", {
         method: "POST",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded"
@@ -19,7 +19,26 @@ export default async function handler(req, res) {
         })
     });
 
-    const data = await response.json();
+    const tokenData = await tokenResponse.json();
 
-    return res.status(response.status).json(data);
+    if (!tokenData.access_token) {
+        return res.status(tokenResponse.status).json(tokenData);
+    }
+
+    const accountsResponse = await fetch(
+        "https://api.derivws.com/trading/v1/options/accounts",
+        {
+            headers: {
+                "Authorization": `Bearer ${tokenData.access_token}`,
+                "Deriv-App-ID": "33zqFdSUnH9jY0bjdm8Vn"
+            }
+        }
+    );
+
+    const accountsData = await accountsResponse.json();
+
+    return res.status(200).json({
+        access_token: tokenData.access_token,
+        accounts: accountsData
+    });
 }
