@@ -66,10 +66,12 @@ export default async function handler(req, res) {
     );
 
     const otpData = await otpResponse.json();
+    console.log("OTP Response:", otpData);
+
 
     return res.status(200).json({
         access_token: tokenData.access_token,
         account,
-        ws_url: otpData.data?.url
+        otpDatadata
     });
 }
