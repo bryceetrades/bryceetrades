@@ -47,3 +47,37 @@ async function login() {
 }
 
 document.getElementById("loginBtn").addEventListener("click", login);
+(async () => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (!params.has("code")) return;
+
+    const code = params.get("code");
+    const verifier = localStorage.getItem("pkce_verifier");
+
+    const response = await fetch("/api/token", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            code,
+            verifier
+        })
+    });
+
+    const data = await response.json();
+
+    console.log("OAuth Response:", data);
+
+    if (data.access_token) {
+        localStorage.setItem("deriv_token", data.access_token);
+
+        window.history.replaceState({}, "", "/");
+
+        alert("✅ Login Successful");
+    } else {
+        alert("❌ Login Failed");
+        console.log(data);
+    }
+})();
