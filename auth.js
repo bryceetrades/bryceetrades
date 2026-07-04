@@ -68,6 +68,9 @@ document.getElementById("loginBtn").addEventListener("click", login);
 
     const data = await response.json();
 
+console.log("Response status:", response.status);
+console.log("Response data:", data);
+
     console.log("OAuth Response:", data);
 
     if (data.access_token) {
