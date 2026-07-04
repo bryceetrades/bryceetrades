@@ -1,23 +1,15 @@
-const APP_ID = CONFIG.APP_ID;
+const APP_ID = CONFIG.WS_APP_ID;
 
 // =====================
 // DERIV LOGIN
 // =====================
 
-const loginBtn = document.getElementById("loginBtn");
-
-// If already logged in, hide the login button immediately
-if (localStorage.getItem("deriv_token")) {
-    loginBtn.textContent = "✅ Logged In";
-    loginBtn.disabled = true;
-    loginBtn.style.opacity = "0.7";
-    loginBtn.style.cursor = "default";
-} else {
-    loginBtn.addEventListener("click", login);
-}
+document.getElementById("loginBtn").addEventListener("click", () => {
+    login();
+});
 
 // =====================
-// CONNECT TO DERIV
+// LIVE TICKS
 // =====================
 
 const socket = new WebSocket(
@@ -33,10 +25,7 @@ socket.onopen = () => {
 
     console.log("Connected");
 
-    // -------------------
     // Load saved account
-    // -------------------
-
     const account = JSON.parse(localStorage.getItem("deriv_account"));
 
     if (account) {
@@ -47,71 +36,26 @@ socket.onopen = () => {
         document.getElementById("status").textContent =
             `🟢 ${account.account_id}`;
 
+        const loginBtn = document.getElementById("loginBtn");
+        loginBtn.textContent = "✅ Logged In";
+        loginBtn.disabled = true;
     }
 
-    // -------------------
-    // Authorize websocket
-    // -------------------
-
-    const token = localStorage.getItem("deriv_token");
-
-    if (token) {
-
-        socket.send(JSON.stringify({
-            authorize: token
-        }));
-
-    }
-
-    // -------------------
-    // Subscribe to ticks
-    // -------------------
-
+    // ONLY subscribe to ticks
     socket.send(JSON.stringify({
         ticks: CONFIG.SYMBOL
     }));
-
 };
 
 socket.onmessage = (event) => {
 
     const data = JSON.parse(event.data);
 
-    // -------------------
-    // Authorized
-    // -------------------
-
-    if (data.authorize) {
-
-        console.log("Authorized");
-
-        document.getElementById("status").textContent =
-            `🟢 ${data.authorize.loginid}`;
-
-        document.getElementById("accountBalance").textContent =
-            `${data.authorize.balance} ${data.authorize.currency}`;
-
-        loginBtn.textContent = "✅ Logged In";
-        loginBtn.disabled = true;
-        loginBtn.style.opacity = "0.7";
-
-        return;
-    }
-
-    // -------------------
-    // Errors
-    // -------------------
-
+    // Ignore errors
     if (data.error) {
-
         console.log(data.error);
-
         return;
     }
-
-    // -------------------
-    // Ignore non-ticks
-    // -------------------
 
     if (!data.tick) return;
 
@@ -139,7 +83,7 @@ socket.onmessage = (event) => {
     for (let i = 0; i < 10; i++) {
 
         const percent = (
-            count[i] / last100Digits.length * 100
+            (count[i] / last100Digits.length) * 100
         ).toFixed(1);
 
         let cls = "";
@@ -149,7 +93,6 @@ socket.onmessage = (event) => {
 
         html += `
         <div class="digit-row ${cls}">
-
             <span class="digit-label">${i}</span>
 
             <div class="bar-container">
@@ -157,8 +100,8 @@ socket.onmessage = (event) => {
             </div>
 
             <span class="digit-percent">${percent}%</span>
-
-        </div>`;
+        </div>
+        `;
     }
 
     document.getElementById("analysis").innerHTML = html;
@@ -172,16 +115,12 @@ socket.onmessage = (event) => {
         highStreak++;
         lowStreak = 0;
 
-    }
-
-    else if ([0,1,2,3].includes(digit)) {
+    } else if ([0,1,2,3].includes(digit)) {
 
         lowStreak++;
         highStreak = 0;
 
-    }
-
-    else {
+    } else {
 
         highStreak = 0;
         lowStreak = 0;
@@ -210,19 +149,14 @@ socket.onmessage = (event) => {
     }
 
     if (highStreak === 0 && lowStreak === 0) {
-
         signalLocked = false;
-
     }
 
     document.getElementById("signals").innerHTML = `
         <h3>${signal}</h3>
-
         <p>High Streak: ${highStreak}</p>
-
         <p>Low Streak: ${lowStreak}</p>
     `;
-
 };
 
 socket.onerror = () => {
