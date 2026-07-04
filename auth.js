@@ -81,7 +81,7 @@ document.getElementById("loginBtn").addEventListener("click", login);
 
     window.history.replaceState({}, "", "/");
 
-    window.location.href = "index.html";
+    location.reload();
 }
          else {
         alert("❌ Login Failed");
