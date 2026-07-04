@@ -28,10 +28,13 @@ function base64url(buffer) {
 }
 
 async function login() {
+
     const verifier = randomString(64);
+
     localStorage.setItem("pkce_verifier", verifier);
 
     const challenge = base64url(await sha256(verifier));
+
     const state = randomString(32);
 
     const url =
@@ -47,12 +50,15 @@ async function login() {
 }
 
 document.getElementById("loginBtn").addEventListener("click", login);
+
 (async () => {
+
     const params = new URLSearchParams(window.location.search);
 
     if (!params.has("code")) return;
 
     const code = params.get("code");
+
     const verifier = localStorage.getItem("pkce_verifier");
 
     const response = await fetch("/api/token", {
@@ -68,26 +74,35 @@ document.getElementById("loginBtn").addEventListener("click", login);
 
     const data = await response.json();
 
-console.log("Response status:", response.status);
-console.log("Response data:", data);
-
     console.log("OAuth Response:", data);
 
     if (data.access_token) {
 
-    localStorage.setItem("deriv_token", data.access_token);
+        localStorage.setItem(
+            "deriv_token",
+            data.access_token
+        );
 
-    localStorage.setItem(
-        "deriv_account",
-        JSON.stringify(data.accounts.data[0])
-    );
+        localStorage.setItem(
+            "deriv_account",
+            JSON.stringify(data.account)
+        );
 
-    alert("Login successful");
+        localStorage.setItem(
+            "deriv_ws_url",
+            data.ws_url
+        );
 
-    window.history.replaceState({}, "", "/");
-}
-         else {
+        window.history.replaceState({}, "", "/");
+
+        location.reload();
+
+    } else {
+
         alert("❌ Login Failed");
+
         console.log(data);
+
     }
+
 })();
