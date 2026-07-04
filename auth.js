@@ -82,9 +82,9 @@ console.log("Response data:", data);
         JSON.stringify(data.accounts.data[0])
     );
 
-    window.history.replaceState({}, "", "/");
+    alert("Login successful");
 
-    location.reload();
+    window.history.replaceState({}, "", "/");
 }
          else {
         alert("❌ Login Failed");
