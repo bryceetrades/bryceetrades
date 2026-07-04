@@ -71,12 +71,19 @@ document.getElementById("loginBtn").addEventListener("click", login);
     console.log("OAuth Response:", data);
 
     if (data.access_token) {
-        localStorage.setItem("deriv_token", data.access_token);
 
-        window.history.replaceState({}, "", "/");
+    localStorage.setItem("deriv_token", data.access_token);
 
-        alert("✅ Login Successful");
-    } else {
+    localStorage.setItem(
+        "deriv_account",
+        JSON.stringify(data.accounts.data[0])
+    );
+
+    window.history.replaceState({}, "", "/");
+
+    window.location.href = "index.html";
+}
+         else {
         alert("❌ Login Failed");
         console.log(data);
     }
