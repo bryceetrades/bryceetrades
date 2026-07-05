@@ -67,8 +67,9 @@ export default async function handler(req, res) {
     );
 
     const otpData = await otpResponse.json();
+    const wsUrl = otpData.data && otpData.data.url;
 
-    if (!otpData.url) {
+    if (!wsUrl) {
         return res.status(500).json({
             error: "Failed to generate OTP WebSocket URL",
             otp: otpData
@@ -78,6 +79,6 @@ export default async function handler(req, res) {
     return res.status(200).json({
         access_token: tokenData.access_token,
         account,
-        ws_url: otpData.url
+        ws_url: wsUrl
     });
 }
