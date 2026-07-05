@@ -1,49 +1,74 @@
-// =====================
-// BRYCEE TRADES - Trading Engine
-// =====================
-
 async function buyDigitContract(contractType, barrier, stake = 1) {
 
-    if (!api) {
-        alert("Not connected to Deriv.");
+    const token = localStorage.getItem("deriv_token");
+
+    if (!token) {
+        alert("Please login first.");
         return;
     }
 
-    try {
+    const ws = new WebSocket(
+        `wss://ws.derivws.com/websockets/v3?app_id=${CONFIG.APP_ID}`
+    );
 
-        // Request proposal
-        const proposal = await api.proposal({
-            proposal: 1,
-            amount: stake,
-            basis: "stake",
-            contract_type: contractType,
-            currency: "USD",
-            duration: 1,
-            duration_unit: "t",
-            symbol: currentSymbol,
-            barrier: barrier
-        });
+    ws.onopen = () => {
 
-        // Buy contract
-        const buy = await api.buy({
-            buy: proposal.proposal.id,
-            price: stake
-        });
+        ws.send(JSON.stringify({
+            authorize: token
+        }));
 
-        console.log("Trade placed:", buy);
+    };
 
-        alert("Trade placed successfully!");
+    ws.onmessage = (event) => {
 
-    } catch (err) {
+        const data = JSON.parse(event.data);
 
-        console.error(err);
+        if (data.error) {
+            alert(data.error.message);
+            ws.close();
+            return;
+        }
 
-        alert(
-            err.error?.message ||
-            err.message ||
-            "Trade failed."
-        );
+        // Authorized
+        if (data.msg_type === "authorize") {
 
-    }
+            ws.send(JSON.stringify({
+                proposal: 1,
+                amount: stake,
+                basis: "stake",
+                contract_type: contractType,
+                currency: "USD",
+                duration: 1,
+                duration_unit: "t",
+                symbol: CONFIG.SYMBOL,
+                barrier: barrier
+            }));
+
+            return;
+        }
+
+        // Proposal received
+        if (data.msg_type === "proposal") {
+
+            ws.send(JSON.stringify({
+                buy: data.proposal.id,
+                price: stake
+            }));
+
+            return;
+        }
+
+        // Trade purchased
+        if (data.msg_type === "buy") {
+
+            alert("✅ Trade placed successfully!");
+
+            console.log(data);
+
+            ws.close();
+
+        }
+
+    };
 
 }
