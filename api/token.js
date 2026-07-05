@@ -81,4 +81,4 @@ export default async function handler(req, res) {
         account,
         ws_url: wsUrl
     });
-}
+} 
