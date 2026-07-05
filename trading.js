@@ -134,3 +134,64 @@ async function placeTrade() {
 }
 
 document.getElementById("buyBtn").addEventListener("click", placeTrade);
+
+// =====================
+// QUICK TRADE (Dashboard) — one-click Rise/Fall using the Quick Trade stake
+// =====================
+
+async function quickTrade(direction) {
+
+    if (!localStorage.getItem("deriv_ws_url")) {
+        alert("Please log in with Deriv first.");
+        return;
+    }
+
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        alert("Not connected to Deriv.");
+        return;
+    }
+
+    const stake = Number(document.getElementById("quickStake").value);
+
+    if (!stake || stake <= 0) {
+        alert("Enter a stake amount.");
+        return;
+    }
+
+    try {
+
+        logEvent(`Quick trade: ${direction} on ${currentSymbol}, stake ${stake}`);
+
+        const proposalResponse = await sendRequest({
+            proposal: 1,
+            amount: stake,
+            basis: "stake",
+            contract_type: direction, // "CALL" (Rise) or "PUT" (Fall)
+            currency: "USD",
+            duration: 5,
+            duration_unit: "t",
+            underlying_symbol: currentSymbol
+        });
+
+        const buyResponse = await sendRequest({
+            buy: proposalResponse.proposal.id,
+            price: stake
+        });
+
+        logEvent(`Quick trade placed — contract ${buyResponse.buy && buyResponse.buy.contract_id}`);
+
+        if (buyResponse.buy && buyResponse.buy.contract_id) {
+            subscribeToContract(buyResponse.buy.contract_id);
+        }
+
+    } catch (err) {
+
+        console.error(err);
+        logEvent(`Quick trade failed: ${err.message || "unknown error"}`);
+        alert(err.message || "Trade failed.");
+
+    }
+}
+
+document.getElementById("quickRise").addEventListener("click", () => quickTrade("CALL"));
+document.getElementById("quickFall").addEventListener("click", () => quickTrade("PUT"));

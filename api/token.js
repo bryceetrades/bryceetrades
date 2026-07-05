@@ -43,7 +43,12 @@ export default async function handler(req, res) {
     );
 
     const accountsData = await accountsResponse.json();
-    const account = accountsData.data && accountsData.data[0];
+    const accounts = accountsData.data || [];
+
+    // Prefer the demo/virtual account so testing never touches real funds.
+    // Falls back to the first account if no demo account is found.
+    const account =
+        accounts.find(a => a.account_type === "demo") || accounts[0];
 
     if (!account) {
         return res.status(500).json({
@@ -79,6 +84,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
         access_token: tokenData.access_token,
         account,
+        accounts,
         ws_url: wsUrl
     });
-} 
+}

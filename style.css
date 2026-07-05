@@ -224,6 +224,26 @@ input[type="number"],input[type="text"]{
 .danger-btn{background:var(--red);color:white;border:none;padding:12px 18px;border-radius:10px;font-weight:700;}
 .danger-btn:hover{background:#dc2626;}
 
+.account-switch-row{display:flex;align-items:center;margin-bottom:16px;}
+.account-pill{
+    background:var(--panel);border:1px solid var(--border);color:var(--muted);
+    padding:8px 18px;font-size:13px;font-weight:700;border-radius:999px;margin-right:8px;
+    transition:all .15s;
+}
+.account-pill.active{background:var(--gold);color:#1c1207;border-color:var(--gold);}
+.account-pill:hover:not(.active){color:var(--text);border-color:var(--cyan);}
+
+#priceChart{width:100%;height:140px;display:block;}
+
+.quick-trade-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.quick-trade-row input{width:120px;}
+.quick-trade-buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.quick-btn{padding:16px;border:none;border-radius:12px;font-weight:800;font-size:14px;letter-spacing:.03em;color:white;}
+.quick-rise{background:var(--green);}
+.quick-rise:hover{background:#16a34a;}
+.quick-fall{background:var(--red);}
+.quick-fall:hover{background:#dc2626;}
+
 @media(max-width:900px){
     .stats{grid-template-columns:1fr;}
     .two-col{grid-template-columns:1fr;}

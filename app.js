@@ -49,6 +49,131 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
     }
 })();
 
+// --- Real/Demo account switching -----------------------------------------
+(function initAccountSwitch() {
+    const account = JSON.parse(localStorage.getItem("deriv_account") || "null");
+    const demoBtn = document.getElementById("switchDemo");
+    const realBtn = document.getElementById("switchReal");
+    const note = document.getElementById("accountSwitchNote");
+
+    if (account) {
+        demoBtn.classList.toggle("active", account.account_type === "demo");
+        realBtn.classList.toggle("active", account.account_type !== "demo");
+    }
+
+    function switchAccount(targetType) {
+        const accounts = JSON.parse(localStorage.getItem("deriv_accounts") || "[]");
+        const accessToken = localStorage.getItem("deriv_token");
+        const target = accounts.find(a => a.account_type === targetType);
+
+        if (!target) {
+            note.textContent = `No ${targetType} account found on this login.`;
+            return;
+        }
+        if (!accessToken) {
+            note.textContent = "Please log in first.";
+            return;
+        }
+
+        note.textContent = "Switching...";
+
+        fetch("/api/otp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ access_token: accessToken, account_id: target.account_id })
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ws_url) {
+                    note.textContent = "Switch failed — see console.";
+                    console.error(data);
+                    return;
+                }
+                localStorage.setItem("deriv_ws_url", data.ws_url);
+                localStorage.setItem("deriv_account", JSON.stringify(target));
+                location.reload();
+            })
+            .catch(err => {
+                note.textContent = "Switch failed — see console.";
+                console.error(err);
+            });
+    }
+
+    demoBtn.addEventListener("click", () => switchAccount("demo"));
+    realBtn.addEventListener("click", () => switchAccount("real"));
+})();
+
+// --- Daily P&L / win rate / trade count (persists per calendar day) ------
+function todayStatsKey() {
+    return "stats:" + new Date().toISOString().slice(0, 10);
+}
+
+function loadDailyStats() {
+    try {
+        const raw = localStorage.getItem(todayStatsKey());
+        return raw ? JSON.parse(raw) : { trades: 0, wins: 0, pnl: 0 };
+    } catch {
+        return { trades: 0, wins: 0, pnl: 0 };
+    }
+}
+
+function recordTradeResult(profit) {
+    const stats = loadDailyStats();
+    stats.trades += 1;
+    if (profit > 0) stats.wins += 1;
+    stats.pnl += profit;
+    localStorage.setItem(todayStatsKey(), JSON.stringify(stats));
+    renderDailyStats(stats);
+}
+
+function renderDailyStats(stats) {
+    stats = stats || loadDailyStats();
+    const winRate = stats.trades ? ((stats.wins / stats.trades) * 100).toFixed(1) : "0.0";
+
+    const pnlEl = document.getElementById("pnlToday");
+    pnlEl.textContent = (stats.pnl >= 0 ? "+" : "") + stats.pnl.toFixed(2) + " USD";
+    pnlEl.className = stats.pnl >= 0 ? "profit-positive" : "profit-negative";
+
+    document.getElementById("winRate").textContent = winRate + "%";
+    document.getElementById("tradesToday").textContent = stats.trades;
+}
+
+renderDailyStats();
+
+// --- Live price chart (simple line chart, canvas) -------------------------
+let priceHistory = [];
+
+function drawChart() {
+    const canvas = document.getElementById("priceChart");
+    if (!canvas || priceHistory.length < 2) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight || 140;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+
+    const min = Math.min(...priceHistory);
+    const max = Math.max(...priceHistory);
+    const range = (max - min) || 1;
+
+    ctx.beginPath();
+    priceHistory.forEach((price, i) => {
+        const x = (i / (priceHistory.length - 1)) * width;
+        const y = height - ((price - min) / range) * height;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+
+    const rising = priceHistory[priceHistory.length - 1] >= priceHistory[0];
+    ctx.strokeStyle = rising ? "#22c55e" : "#ef4444";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+}
+
 // =====================
 // SOCKET CONNECTION
 // =====================
@@ -213,6 +338,7 @@ function subscribeToContract(contract_id) {
             if (poc.is_sold) {
                 delete openPositions[contract_id];
                 addToHistory(poc);
+                recordTradeResult(Number(poc.profit || 0));
             } else {
                 openPositions[contract_id] = poc;
             }
@@ -367,6 +493,10 @@ socket.onmessage = (event) => {
         tickWindow.shift();
     }
 
+    priceHistory.push(quote);
+    if (priceHistory.length > 60) priceHistory.shift();
+    drawChart();
+
     renderAnalysis();
 
     // =====================
@@ -477,36 +607,4 @@ function renderAnalysis() {
 
     const recent = tickWindow.slice(-10);
     document.getElementById("recentStrip").innerHTML = recent.map(t =>
-        `<div class="recent-chip ${t.direction === "fall" ? "fall" : "rise"}">${t.digit}</div>`
-    ).join("");
-
-    // --- Even / Odd ---
-    const evenPct = (evenCount / total) * 100;
-    document.getElementById("evenPct").textContent = evenPct.toFixed(1) + "%";
-    document.getElementById("oddPct").textContent = (100 - evenPct).toFixed(1) + "%";
-    document.getElementById("evenBar").style.width = evenPct.toFixed(1) + "%";
-
-    // --- Rise / Fall (ignores "same" ticks) ---
-    const risePct = directionTotal ? (riseCount / directionTotal) * 100 : 0;
-    document.getElementById("risePct").textContent = risePct.toFixed(1) + "%";
-    document.getElementById("fallPct").textContent = (100 - risePct).toFixed(1) + "%";
-    document.getElementById("riseBar").style.width = risePct.toFixed(1) + "%";
-
-    // --- Over / Under ---
-    const overPct = (overCount / total) * 100;
-    const underPct = (underCount / total) * 100;
-    document.getElementById("underBarrierLabel").textContent = barrier + 1;
-    document.getElementById("overPct").textContent = overPct.toFixed(1) + "%";
-    document.getElementById("underPct").textContent = underPct.toFixed(1) + "%";
-    document.getElementById("overUnderBar").style.width = overPct.toFixed(1) + "%";
-}
-
-socket.onerror = () => {
-    document.getElementById("status").textContent = "🔴 Connection Error";
-    logEvent("Connection error");
-};
-
-socket.onclose = () => {
-    document.getElementById("status").textContent = "🟠 Disconnected";
-    logEvent("Disconnected");
-};
+        `<div class="recent-chip ${t.direction === "fall" ? "fall" :
