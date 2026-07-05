@@ -107,7 +107,10 @@ async function placeTrade() {
 
     try {
 
-        const proposalResponse = await sendRequest(buildContractRequest());
+        const request = buildContractRequest();
+        logEvent(`Requesting proposal: ${request.contract_type} on ${currentSymbol}, stake ${stake}`);
+
+        const proposalResponse = await sendRequest(request);
 
         const buyResponse = await sendRequest({
             buy: proposalResponse.proposal.id,
@@ -115,6 +118,7 @@ async function placeTrade() {
         });
 
         console.log("Trade placed:", buyResponse);
+        logEvent(`Trade placed — contract ${buyResponse.buy && buyResponse.buy.contract_id}`);
 
         if (buyResponse.buy && buyResponse.buy.contract_id) {
             subscribeToContract(buyResponse.buy.contract_id);
@@ -123,6 +127,7 @@ async function placeTrade() {
     } catch (err) {
 
         console.error(err);
+        logEvent(`Trade failed: ${err.message || "unknown error"}`);
         alert(err.message || "Trade failed.");
 
     }

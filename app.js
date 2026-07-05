@@ -1,4 +1,55 @@
 // =====================
+// UI CHROME (tabs, sidebar, accordions, logs, logout)
+// =====================
+// Pure UI wiring — doesn't touch the socket/trading logic below.
+
+function logEvent(msg) {
+    const panel = document.getElementById("logsPanel");
+    if (!panel) return;
+    const time = new Date().toLocaleTimeString();
+    const line = document.createElement("div");
+    line.textContent = `[${time}] ${msg}`;
+    panel.prepend(line);
+}
+
+function activateTab(tabId) {
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tabId));
+    document.querySelectorAll(".side-icon").forEach(b => b.classList.toggle("active", b.dataset.tab === tabId));
+
+    const panel = document.getElementById(`tab-${tabId}`);
+    if (panel) panel.classList.add("active");
+
+    // The fixed Place Trade bar only makes sense on the Bot Builder tab
+    document.getElementById("tab-bot-actionbar").style.display = (tabId === "bot") ? "block" : "none";
+}
+
+document.querySelectorAll(".tab-btn, .side-icon").forEach(btn => {
+    btn.addEventListener("click", () => activateTab(btn.dataset.tab));
+});
+
+document.querySelectorAll(".accordion-head").forEach(head => {
+    head.addEventListener("click", () => {
+        head.closest(".accordion").classList.toggle("open");
+    });
+});
+
+document.getElementById("logoutBtn").addEventListener("click", () => {
+    localStorage.removeItem("deriv_token");
+    localStorage.removeItem("deriv_account");
+    localStorage.removeItem("deriv_ws_url");
+    location.reload();
+});
+
+(function initSettingsAccountInfo() {
+    const account = JSON.parse(localStorage.getItem("deriv_account") || "null");
+    if (account) {
+        document.getElementById("settingsAccountInfo").textContent =
+            `Logged in as ${account.account_id} (${account.account_type || "unknown"})`;
+    }
+})();
+
+// =====================
 // SOCKET CONNECTION
 // =====================
 // Two possible endpoints for the Options API:
@@ -30,21 +81,34 @@ function sendRequest(payload) {
 function sendSubscription(payload, onUpdate) {
     const req_id = reqCounter++;
     activeSubscriptions[req_id] = onUpdate;
-    socket.send(JSON.stringify({ ...payload, subscribe: 1, req_id }));
+    safeSend({ ...payload, subscribe: 1, req_id });
     return req_id;
+}
+
+function safeSend(payload) {
+    if (socket.readyState !== WebSocket.OPEN) {
+        console.warn("Not connected — skipped send:", payload);
+        document.getElementById("status").textContent = "🟠 Disconnected";
+        return false;
+    }
+    socket.send(JSON.stringify(payload));
+    return true;
 }
 // -------------------------------------------------------------------------
 
 // --- Market state --------------------------------------------------------
 let currentSymbol = CONFIG.SYMBOL;
 
-let last100Digits = [];
+let windowSize = 100;
+let tickWindow = [];   // { digit, direction: "rise" | "fall" | "same" }
+let lastQuote = null;
+
 let highStreak = 0;
 let lowStreak = 0;
 let signalLocked = false;
 
 function populateMarketSelect() {
-    const select = document.getElementById("marketSelect");
+    const select = document.getElementById("marketSelectTop");
 
     CONFIG.SYMBOLS.forEach(s => {
         const opt = document.createElement("option");
@@ -57,24 +121,78 @@ function populateMarketSelect() {
     select.addEventListener("change", (e) => switchMarket(e.target.value));
 }
 
-function switchMarket(newSymbol) {
-    // Stop the old ticks stream before starting a new one
-    socket.send(JSON.stringify({ forget_all: "ticks" }));
-
-    currentSymbol = newSymbol;
-    last100Digits = [];
+function resetAnalysisState() {
+    tickWindow = [];
+    lastQuote = null;
     highStreak = 0;
     lowStreak = 0;
     signalLocked = false;
 
     document.getElementById("tick").textContent = "-";
     document.getElementById("analysis").innerHTML = "";
+    document.getElementById("priceValue").textContent = "-";
+    document.getElementById("recentStrip").innerHTML = "";
     document.getElementById("signals").innerHTML = "Waiting for analysis...";
+}
 
-    socket.send(JSON.stringify({ ticks: currentSymbol, subscribe: 1 }));
+// Pre-fill the analysis window with recent history so stats aren't empty
+// right after loading or switching markets.
+function backfillHistory(symbol) {
+    sendRequest({
+        ticks_history: symbol,
+        count: windowSize,
+        end: "latest",
+        style: "ticks"
+    })
+        .then((data) => {
+            const prices = (data.history && data.history.prices) || [];
+
+            prices.forEach((price) => {
+                const quote = Number(price);
+                const digit = Number(price.toString().slice(-1));
+
+                let direction = "same";
+                if (lastQuote !== null) {
+                    if (quote > lastQuote) direction = "rise";
+                    else if (quote < lastQuote) direction = "fall";
+                }
+
+                lastQuote = quote;
+                tickWindow.push({ digit, direction });
+            });
+
+            renderAnalysis();
+        })
+        .catch((err) => console.error("History backfill failed:", err));
+}
+
+function populateTicksWindowSelect() {
+    document.getElementById("ticksWindow").addEventListener("change", (e) => {
+        windowSize = Number(e.target.value);
+        resetAnalysisState();
+        backfillHistory(currentSymbol);
+    });
+}
+
+function switchMarket(newSymbol) {
+    // Stop the old ticks stream before starting a new one
+    safeSend({ forget_all: "ticks" });
+
+    currentSymbol = newSymbol;
+    resetAnalysisState();
+    backfillHistory(currentSymbol);
+
+    const label = CONFIG.SYMBOLS.find(s => s.code === newSymbol);
+    document.getElementById("analysisMarketLabel").textContent = label ? label.name : newSymbol;
+
+    safeSend({ ticks: currentSymbol, subscribe: 1 });
+    logEvent(`Switched market to ${newSymbol}`);
 }
 
 populateMarketSelect();
+populateTicksWindowSelect();
+
+document.getElementById("overUnderBarrier").addEventListener("input", renderAnalysis);
 // -------------------------------------------------------------------------
 
 // --- Open positions / trade history ---------------------------------------
@@ -166,6 +284,7 @@ function addToHistory(poc) {
 socket.onopen = () => {
 
     console.log("Connected to:", authedWsUrl ? "authenticated socket" : "public socket");
+    logEvent(authedWsUrl ? "Connected to authenticated socket" : "Connected to public socket");
 
     if (authedWsUrl) {
 
@@ -173,6 +292,7 @@ socket.onopen = () => {
 
         if (account) {
             document.getElementById("status").textContent = `🟢 ${account.account_id}`;
+            logEvent(`Authorized as ${account.account_id}`);
 
             const loginBtn = document.getElementById("loginBtn");
             loginBtn.textContent = "✅ Logged In";
@@ -192,14 +312,14 @@ socket.onopen = () => {
             .then((data) => {
                 const contracts = (data.portfolio && data.portfolio.contracts) || [];
                 contracts.forEach(c => subscribeToContract(c.contract_id));
+                logEvent(`Loaded ${contracts.length} open position(s) from portfolio`);
             })
             .catch((err) => console.error("Portfolio load failed:", err));
     }
 
-    socket.send(JSON.stringify({
-        ticks: currentSymbol,
-        subscribe: 1
-    }));
+    safeSend({ ticks: currentSymbol, subscribe: 1 });
+    backfillHistory(currentSymbol);
+    logEvent(`Subscribed to ticks for ${currentSymbol}`);
 };
 
 socket.onmessage = (event) => {
@@ -230,52 +350,24 @@ socket.onmessage = (event) => {
 
     if (!data.tick) return;
 
-    const digit = Number(
-        data.tick.quote.toString().slice(-1)
-    );
+    const quote = data.tick.quote;
+    const digit = Number(quote.toString().slice(-1));
+
+    let direction = "same";
+    if (lastQuote !== null) {
+        if (quote > lastQuote) direction = "rise";
+        else if (quote < lastQuote) direction = "fall";
+    }
+    lastQuote = quote;
 
     document.getElementById("tick").textContent = digit;
 
-    last100Digits.push(digit);
-
-    if (last100Digits.length > 100) {
-        last100Digits.shift();
+    tickWindow.push({ digit, direction });
+    if (tickWindow.length > windowSize) {
+        tickWindow.shift();
     }
 
-    const count = Array(10).fill(0);
-
-    last100Digits.forEach(d => count[d]++);
-
-    const highest = Math.max(...count);
-    const lowest = Math.min(...count);
-
-    let html = "";
-
-    for (let i = 0; i < 10; i++) {
-
-        const percent = (
-            (count[i] / last100Digits.length) * 100
-        ).toFixed(1);
-
-        let cls = "";
-
-        if (count[i] === highest) cls = "highest";
-        if (count[i] === lowest) cls = "lowest";
-
-        html += `
-        <div class="digit-row ${cls}">
-            <span class="digit-label">${i}</span>
-
-            <div class="bar-container">
-                <div class="bar" style="width:${percent}%"></div>
-            </div>
-
-            <span class="digit-percent">${percent}%</span>
-        </div>
-        `;
-    }
-
-    document.getElementById("analysis").innerHTML = html;
+    renderAnalysis();
 
     // =====================
     // SIGNAL ENGINE (analytics only — does not place trades automatically)
@@ -330,10 +422,91 @@ socket.onmessage = (event) => {
     `;
 };
 
+function renderAnalysis() {
+
+    if (tickWindow.length === 0) return;
+
+    const total = tickWindow.length;
+    const digitCount = Array(10).fill(0);
+    let evenCount = 0;
+    let riseCount = 0;
+    let fallCount = 0;
+    let directionTotal = 0;
+
+    const barrier = Number(document.getElementById("overUnderBarrier").value) || 0;
+    let overCount = 0;
+    let underCount = 0;
+
+    tickWindow.forEach(({ digit, direction }) => {
+        digitCount[digit]++;
+
+        if (digit % 2 === 0) evenCount++;
+
+        if (direction === "rise") { riseCount++; directionTotal++; }
+        else if (direction === "fall") { fallCount++; directionTotal++; }
+
+        if (digit > barrier) overCount++;
+        else if (digit < barrier + 1) underCount++;
+    });
+
+    // --- Digit distribution circles (2 rows of 5) ---
+    const highest = Math.max(...digitCount);
+    const lowest = Math.min(...digitCount);
+    const currentDigit = tickWindow[tickWindow.length - 1].digit;
+    let html = "";
+
+    for (let i = 0; i < 10; i++) {
+        const percent = ((digitCount[i] / total) * 100).toFixed(1);
+        let cls = "digit-circle";
+        if (digitCount[i] === highest) cls += " highest";
+        if (digitCount[i] === lowest) cls += " lowest";
+        if (i === currentDigit) cls += " current";
+
+        html += `
+        <div class="${cls}">
+            <div class="val">${i}</div>
+            <div class="pct">${percent}%</div>
+        </div>`;
+    }
+    document.getElementById("analysis").innerHTML = html;
+
+    // --- Current price + recent ticks strip ---
+    const priceStr = lastQuote.toFixed(2);
+    document.getElementById("priceValue").innerHTML =
+        priceStr.slice(0, -1) + `<span class="last-digit">${priceStr.slice(-1)}</span>`;
+
+    const recent = tickWindow.slice(-10);
+    document.getElementById("recentStrip").innerHTML = recent.map(t =>
+        `<div class="recent-chip ${t.direction === "fall" ? "fall" : "rise"}">${t.digit}</div>`
+    ).join("");
+
+    // --- Even / Odd ---
+    const evenPct = (evenCount / total) * 100;
+    document.getElementById("evenPct").textContent = evenPct.toFixed(1) + "%";
+    document.getElementById("oddPct").textContent = (100 - evenPct).toFixed(1) + "%";
+    document.getElementById("evenBar").style.width = evenPct.toFixed(1) + "%";
+
+    // --- Rise / Fall (ignores "same" ticks) ---
+    const risePct = directionTotal ? (riseCount / directionTotal) * 100 : 0;
+    document.getElementById("risePct").textContent = risePct.toFixed(1) + "%";
+    document.getElementById("fallPct").textContent = (100 - risePct).toFixed(1) + "%";
+    document.getElementById("riseBar").style.width = risePct.toFixed(1) + "%";
+
+    // --- Over / Under ---
+    const overPct = (overCount / total) * 100;
+    const underPct = (underCount / total) * 100;
+    document.getElementById("underBarrierLabel").textContent = barrier + 1;
+    document.getElementById("overPct").textContent = overPct.toFixed(1) + "%";
+    document.getElementById("underPct").textContent = underPct.toFixed(1) + "%";
+    document.getElementById("overUnderBar").style.width = overPct.toFixed(1) + "%";
+}
+
 socket.onerror = () => {
     document.getElementById("status").textContent = "🔴 Connection Error";
+    logEvent("Connection error");
 };
 
 socket.onclose = () => {
     document.getElementById("status").textContent = "🟠 Disconnected";
+    logEvent("Disconnected");
 };

@@ -3,121 +3,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brycee Trades</title>
+    <title>BryceeTrades</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
 <header class="topbar">
-    <div>
-        <h1>Brycee Trades</h1>
-        <small>Professional Trading Dashboard</small>
+    <div class="topbar-left">
+        <div class="brand"><span class="brand-mark">B</span>Brycee<span class="accent">Trades</span></div>
     </div>
-
-    <button id="loginBtn">Login with Deriv</button>
+    <div class="topbar-right">
+        <span id="status">🟠 Disconnected</span>
+        <select id="marketSelectTop"></select>
+        <div class="balance-pill">
+            <span class="balance-label">Balance</span>
+            <span id="accountBalance">$0.00</span>
+        </div>
+        <button id="loginBtn">Login with Deriv</button>
+    </div>
 </header>
 
-<div class="stats">
+<nav class="tabbar" id="tabbar">
+    <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="bot">Bot Builder</button>
+    <button class="tab-btn" data-tab="analysis">Analysis Tools</button>
+    <button class="tab-btn" data-tab="tester">Strategy Tester</button>
+    <button class="tab-btn" data-tab="settings">Settings</button>
+</nav>
 
-    <div class="stat-card">
-        <h4>Balance</h4>
-        <h2 id="accountBalance">$0.00</h2>
-    </div>
+<div class="layout">
 
-    <div class="stat-card">
-        <h4>Market</h4>
-        <select id="marketSelect"></select>
-    </div>
+    <aside class="sidebar" id="sidebar">
+        <button class="side-icon active" data-tab="dashboard" title="Dashboard">🏠</button>
+        <button class="side-icon" data-tab="bot" title="Bot Builder">🤖</button>
+        <button class="side-icon" data-tab="analysis" title="Analysis Tools">📈</button>
+        <button class="side-icon" data-tab="tester" title="Strategy Tester">🧪</button>
+        <button class="side-icon" data-tab="settings" title="Settings">⚙️</button>
+    </aside>
 
-    <div class="stat-card">
-        <h4>Status</h4>
-        <h2 id="status">🟠 Disconnected</h2>
-    </div>
+    <main class="content">
 
+        <!-- DASHBOARD -->
+        <section class="tab-panel active" id="tab-dashboard">
+            <div class="card">
+                <h2>Live Digit</h2>
+                <div id="tick" class="live-digit">-</div>
+            </div>
+
+            <div class="card">
+                <h2>Open Positions</h2>
+                <div id="openPositions"><p class="empty-msg">No open positions</p></div>
+            </div>
+
+            <div class="card">
+                <h2>Trade History</h2>
+                <div id="tradeHistory"><p class="empty-msg">No trades yet</p></div>
+            </div>
+        </section>
+
+        <!-- BOT BUILDER -->
+        <section class="tab-panel" id="tab-bot">
+            <div class="two-col">
+
+                <div>
+                    <div class="accordion open" data-accordion>
+                        <button class="accordion-head">PURCHASE CONDITIONS <span class="chevron">▾</span></button>
+                        <div class="accordion-body">
+                            <label class="field-label">Trade Type</label>
+                            <select id="tradeCategory">
+                                <option value="callput_natural">Rise / Fall</option>
+                                <option value="callput_barrier">Higher / Lower</option>
+                                <option value="matchdiff">Matches / Differs</option>
+                                <option value="overunder">Over / Under</option>
+                                <option value="evenodd">Even / Odd</option>
+                            </select>
+
+                            <label class="field-label">Direction</label>
+                            <select id="tradeDirection"></select>
+
+                            <div id="predictionRow" class="field-row" style="display:none">
+                                <label class="field-label">Prediction Digit (0-9)</label>
+                                <input type="number" id="predictionDigit" min="0" max="9" value="5">
+                            </div>
+
+                            <div id="barrierRow" class="field-row" style="display:none">
+                                <label class="field-label">Barrier Offset</label>
+                                <input type="text" id="barrierOffset" value="+0.50">
+                            </div>
+
+                            <label class="field-label">Stake (USD)</label>
+                            <input type="number" id="stake" min="0.35" step="0.01" value="1">
+
+                            <label class="field-label">Duration</label>
+                            <div class="duration-row">
+                                <input type="number" id="duration" min="1" value="5">
+                                <select id="durationUnit">
+                                    <option value="t">Ticks</option>
+                                    <option value="s">Seconds</option>
+                                    <option value="m">Minutes</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion" data-accordion>
+                        <button class="accordion-head">RISK MANAGEMENT <span class="badge-soon">Coming soon</span> <span class="chevron">▾</span></button>
+                        <div class="accordion-body">
+                            <p class="empty-msg">Stop loss / take profit for automated sessions will live here once auto-trading ships.</p>
+                        </div>
+                    </div>
+
+                    <div class="accordion" data-accordion>
+                        <button class="accordion-head">MARTINGALE SETTINGS <span class="badge-soon">Coming soon</span> <span class="chevron">▾</span></button>
+                        <div class="accordion-body">
+                            <p class="empty-msg">Optional stake-scaling after a loss. Comes with a built-in warning — this strategy can drain an account fast.</p>
+                        </div>
+                    </div>
+
+                    <div class="accordion" data-accordion>
+                        <button class="accordion-head">TRADE FILTERS <span class="badge-soon">Coming soon</span> <span class="chevron">▾</span></button>
+                        <div class="accordion-body">
+                            <p class="empty-msg">Restrict trades by volatility, time of day, or spacing between trades.</p>
+                        </div>
+                    </div>
+
+                    <div class="accordion" data-accordion>
+                        <button class="accordion-head">ENTRY CONDITIONS <span class="badge-soon">Coming soon</span> <span class="chevron">▾</span></button>
+                        <div class="accordion-body">
+                            <p class="empty-msg">Rule-based auto-entry (e.g. streak detection) for the bot engine.</p>
+                        </div>
+                    </div>
+
+                    <div class="accordion" data-accordion>
+                        <button class="accordion-head">EXIT CONDITIONS <span class="badge-soon">Coming soon</span> <span class="chevron">▾</span></button>
+                        <div class="accordion-body">
+                            <p class="empty-msg">Auto-stop rules beyond stop loss / take profit.</p>
+                        </div>
+                    </div>
+
+                    <div class="accordion" data-accordion>
+                        <button class="accordion-head">LOGS <span class="chevron">▾</span></button>
+                        <div class="accordion-body">
+                            <div id="logsPanel"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="card">
+                        <div class="card-header-row">
+                            <h2>Digit Analysis</h2>
+                            <select id="ticksWindow">
+                                <option value="100" selected>100 Ticks</option>
+                                <option value="500">500 Ticks</option>
+                                <option value="1000">1000 Ticks</option>
+                            </select>
+                        </div>
+
+                        <div class="price-row">
+                            <div>
+                                <div class="price-label">Selected Market</div>
+                                <strong id="analysisMarketLabel">Volatility 100 Index</strong>
+                            </div>
+                            <div style="text-align:right">
+                                <div class="price-label">Current Price</div>
+                                <div class="price-value" id="priceValue">-</div>
+                            </div>
+                        </div>
+
+                        <div class="recent-strip" id="recentStrip"></div>
+                        <div id="analysis" class="digit-circle-grid"></div>
+                    </div>
+
+                    <div class="card">
+                        <h2>Live Stats</h2>
+                        <div class="split-stat">
+                            <div class="split-label"><span>Even <b id="evenPct">0%</b></span><span>Odd <b id="oddPct">0%</b></span></div>
+                            <div class="split-bar"><div id="evenBar" class="split-fill"></div></div>
+                        </div>
+                        <div class="split-stat">
+                            <div class="split-label"><span>Rise <b id="risePct">0%</b></span><span>Fall <b id="fallPct">0%</b></span></div>
+                            <div class="split-bar"><div id="riseBar" class="split-fill"></div></div>
+                        </div>
+                        <div class="split-stat">
+                            <div class="split-label"><span>Over <input type="number" id="overUnderBarrier" min="0" max="8" value="4"> <b id="overPct">0%</b></span><span>Under <b id="underBarrierLabel">5</b> <b id="underPct">0%</b></span></div>
+                            <div class="split-bar"><div id="overUnderBar" class="split-fill"></div></div>
+                        </div>
+
+                        <div id="signals" class="empty-msg" style="margin-top:10px;">Waiting for analysis...</div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ANALYSIS TOOLS -->
+        <section class="tab-panel" id="tab-analysis">
+            <div class="card">
+                <h2>Analysis Tools</h2>
+                <p class="empty-msg">Deeper analytics (multi-symbol comparison, custom indicators, saved chart layouts) land here as they're built. The live Digit Analysis and Live Stats panels are available now in the Bot Builder tab, right next to trade setup, so you can watch and trade in one place.</p>
+            </div>
+        </section>
+
+        <!-- STRATEGY TESTER -->
+        <section class="tab-panel" id="tab-tester">
+            <div class="card">
+                <h2>Strategy Tester</h2>
+                <p class="empty-msg">Coming soon — backtest a trade rule against real historical ticks before running it live.</p>
+            </div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section class="tab-panel" id="tab-settings">
+            <div class="card">
+                <h2>Account</h2>
+                <p id="settingsAccountInfo" class="empty-msg">Not logged in</p>
+                <button id="logoutBtn" class="danger-btn">Log Out</button>
+            </div>
+        </section>
+
+    </main>
 </div>
 
-<main>
-
-<section class="left-panel">
-
-    <div class="card">
-        <h2>Live Digit</h2>
-        <div id="tick" class="live-digit">-</div>
-    </div>
-
-    <div class="card">
-        <h2>Trade Setup</h2>
-
-        <label class="field-label">Trade Type</label>
-        <select id="tradeCategory">
-            <option value="callput_natural">Rise / Fall</option>
-            <option value="callput_barrier">Higher / Lower</option>
-            <option value="matchdiff">Matches / Differs</option>
-            <option value="overunder">Over / Under</option>
-            <option value="evenodd">Even / Odd</option>
-        </select>
-
-        <label class="field-label">Direction</label>
-        <select id="tradeDirection"></select>
-
-        <div id="predictionRow" class="field-row" style="display:none">
-            <label class="field-label">Prediction Digit (0-9)</label>
-            <input type="number" id="predictionDigit" min="0" max="9" value="5">
-        </div>
-
-        <div id="barrierRow" class="field-row" style="display:none">
-            <label class="field-label">Barrier Offset</label>
-            <input type="text" id="barrierOffset" value="+0.50">
-        </div>
-
-        <label class="field-label">Stake (USD)</label>
-        <input type="number" id="stake" min="0.35" step="0.01" value="1">
-
-        <label class="field-label">Duration</label>
-        <div class="duration-row">
-            <input type="number" id="duration" min="1" value="5">
-            <select id="durationUnit">
-                <option value="t">Ticks</option>
-                <option value="s">Seconds</option>
-                <option value="m">Minutes</option>
-            </select>
-        </div>
-
+<div class="action-bar" id="tab-bot-actionbar" style="display:none">
+    <div class="action-bar-inner">
         <button id="buyBtn">PLACE TRADE</button>
     </div>
-
-</section>
-
-<section class="right-panel">
-
-    <div class="card">
-        <h2>Digit Analysis</h2>
-        <div id="analysis"></div>
-    </div>
-
-    <div class="card">
-        <h2>Trade Signals</h2>
-        <div id="signals">Waiting for analysis...</div>
-    </div>
-
-    <div class="card">
-        <h2>Open Positions</h2>
-        <div id="openPositions">
-            <p class="empty-msg">No open positions</p>
-        </div>
-    </div>
-
-    <div class="card">
-        <h2>Trade History</h2>
-        <div id="tradeHistory">
-            <p class="empty-msg">No trades yet</p>
-        </div>
-    </div>
-
-</section>
-
-</main>
+</div>
 
 </body>
 <script src="config.js"></script>
