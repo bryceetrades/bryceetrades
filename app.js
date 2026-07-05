@@ -1,4 +1,4 @@
-const APP_ID = CONFIG.WS_APP_ID;
+const APP_ID = "1089";
 
 // =====================
 // DERIV LOGIN
@@ -13,7 +13,7 @@ document.getElementById("loginBtn").addEventListener("click", () => {
 // =====================
 
 const socket = new WebSocket(
-    `wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`
+    `wss://ws.derivws.com/websockets/v3?app_id=1089`
 );
 
 let last100Digits = [];
