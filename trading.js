@@ -73,7 +73,7 @@ function buildContractRequest() {
         currency: "USD",
         duration,
         duration_unit,
-        symbol: currentSymbol
+        underlying_symbol: currentSymbol
     };
 
     if (category === "matchdiff" || category === "overunder") {
