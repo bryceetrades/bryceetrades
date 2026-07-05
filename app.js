@@ -11,11 +11,13 @@ const authedWsUrl = localStorage.getItem("deriv_ws_url");
 
 const socket = new WebSocket(authedWsUrl || PUBLIC_WS_URL);
 
-// --- Request/response tracker -----------------------------------------
-// Lets trading.js do `await sendRequest({...})` instead of juggling
-// raw onmessage callbacks. The Deriv API echoes back req_id.
+// --- Request/response layer --------------------------------------------
+// Two patterns:
+//  - sendRequest(payload)              -> one-shot, resolves once (authorize, buy, sell, portfolio snapshot)
+//  - sendSubscription(payload, onUpdate) -> ongoing, calls onUpdate for every push (ticks, balance, open contracts)
 let reqCounter = 1;
-const pendingRequests = {};
+const pendingRequests = {};     // req_id -> { resolve, reject }   (one-shot)
+const activeSubscriptions = {}; // req_id -> onUpdate(data)        (ongoing)
 
 function sendRequest(payload) {
     return new Promise((resolve, reject) => {
@@ -24,12 +26,142 @@ function sendRequest(payload) {
         socket.send(JSON.stringify({ ...payload, req_id }));
     });
 }
-// -----------------------------------------------------------------------
+
+function sendSubscription(payload, onUpdate) {
+    const req_id = reqCounter++;
+    activeSubscriptions[req_id] = onUpdate;
+    socket.send(JSON.stringify({ ...payload, subscribe: 1, req_id }));
+    return req_id;
+}
+// -------------------------------------------------------------------------
+
+// --- Market state --------------------------------------------------------
+let currentSymbol = CONFIG.SYMBOL;
 
 let last100Digits = [];
 let highStreak = 0;
 let lowStreak = 0;
 let signalLocked = false;
+
+function populateMarketSelect() {
+    const select = document.getElementById("marketSelect");
+
+    CONFIG.SYMBOLS.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s.code;
+        opt.textContent = s.name;
+        if (s.code === CONFIG.SYMBOL) opt.selected = true;
+        select.appendChild(opt);
+    });
+
+    select.addEventListener("change", (e) => switchMarket(e.target.value));
+}
+
+function switchMarket(newSymbol) {
+    // Stop the old ticks stream before starting a new one
+    socket.send(JSON.stringify({ forget_all: "ticks" }));
+
+    currentSymbol = newSymbol;
+    last100Digits = [];
+    highStreak = 0;
+    lowStreak = 0;
+    signalLocked = false;
+
+    document.getElementById("tick").textContent = "-";
+    document.getElementById("analysis").innerHTML = "";
+    document.getElementById("signals").innerHTML = "Waiting for analysis...";
+
+    socket.send(JSON.stringify({ ticks: currentSymbol, subscribe: 1 }));
+}
+
+populateMarketSelect();
+// -------------------------------------------------------------------------
+
+// --- Open positions / trade history ---------------------------------------
+const openPositions = {}; // contract_id -> latest proposal_open_contract data
+
+function subscribeToContract(contract_id) {
+    sendSubscription(
+        { proposal_open_contract: 1, contract_id },
+        (data) => {
+            if (data.error) {
+                console.error("Position update error:", data.error);
+                return;
+            }
+
+            const poc = data.proposal_open_contract;
+            if (!poc) return;
+
+            if (poc.is_sold) {
+                delete openPositions[contract_id];
+                addToHistory(poc);
+            } else {
+                openPositions[contract_id] = poc;
+            }
+
+            renderOpenPositions();
+        }
+    );
+}
+
+function renderOpenPositions() {
+    const container = document.getElementById("openPositions");
+    const ids = Object.keys(openPositions);
+
+    if (ids.length === 0) {
+        container.innerHTML = `<p class="empty-msg">No open positions</p>`;
+        return;
+    }
+
+    container.innerHTML = ids.map(id => {
+        const p = openPositions[id];
+        const profit = Number(p.profit || 0);
+        const profitClass = profit >= 0 ? "profit-positive" : "profit-negative";
+
+        return `
+        <div class="position-row">
+            <div>
+                <strong>${p.display_name || p.underlying || ""}</strong>
+                <div class="position-sub">${p.shortcode || ""}</div>
+            </div>
+            <div class="${profitClass}">
+                ${profit >= 0 ? "+" : ""}${profit.toFixed(2)} ${p.currency || ""}
+            </div>
+            <button class="sell-btn" data-id="${id}">Sell</button>
+        </div>`;
+    }).join("");
+
+    container.querySelectorAll(".sell-btn").forEach(btn => {
+        btn.addEventListener("click", () => sellContract(btn.dataset.id));
+    });
+}
+
+async function sellContract(contract_id) {
+    try {
+        // price: 0 = accept current market price
+        await sendRequest({ sell: contract_id, price: 0 });
+    } catch (err) {
+        console.error("Sell failed:", err);
+        alert(err.message || "Sell failed.");
+    }
+}
+
+function addToHistory(poc) {
+    const container = document.getElementById("tradeHistory");
+    if (container.querySelector(".empty-msg")) container.innerHTML = "";
+
+    const profit = Number(poc.profit || 0);
+    const profitClass = profit >= 0 ? "profit-positive" : "profit-negative";
+
+    const row = document.createElement("div");
+    row.className = "history-row";
+    row.innerHTML = `
+        <span>${poc.display_name || poc.underlying || ""}</span>
+        <span class="${profitClass}">${profit >= 0 ? "+" : ""}${profit.toFixed(2)} ${poc.currency || ""}</span>
+    `;
+    container.prepend(row);
+}
+// -------------------------------------------------------------------------
 
 socket.onopen = () => {
 
@@ -40,27 +172,32 @@ socket.onopen = () => {
         const account = JSON.parse(localStorage.getItem("deriv_account") || "null");
 
         if (account) {
-            document.getElementById("status").textContent =
-                `🟢 ${account.account_id}`;
+            document.getElementById("status").textContent = `🟢 ${account.account_id}`;
 
             const loginBtn = document.getElementById("loginBtn");
             loginBtn.textContent = "✅ Logged In";
             loginBtn.disabled = true;
         }
 
-        sendRequest({ balance: 1, subscribe: 1 })
-            .then((data) => {
+        sendSubscription({ balance: 1 }, (data) => {
+            if (data.error) return console.error(data.error);
+            if (data.balance) {
                 document.getElementById("accountBalance").textContent =
                     `${data.balance.balance} ${data.balance.currency}`;
+            }
+        });
+
+        // Load any positions that were already open before this page load
+        sendRequest({ portfolio: 1 })
+            .then((data) => {
+                const contracts = (data.portfolio && data.portfolio.contracts) || [];
+                contracts.forEach(c => subscribeToContract(c.contract_id));
             })
-            .catch((err) => {
-                console.error("Balance request failed:", err);
-            });
+            .catch((err) => console.error("Portfolio load failed:", err));
     }
 
-    // Ticks work on both the public and authenticated socket
     socket.send(JSON.stringify({
-        ticks: CONFIG.SYMBOL,
+        ticks: currentSymbol,
         subscribe: 1
     }));
 };
@@ -69,7 +206,7 @@ socket.onmessage = (event) => {
 
     const data = JSON.parse(event.data);
 
-    // Resolve/reject any pending promise-based request (balance/proposal/buy/etc.)
+    // One-shot requests
     if (data.req_id && pendingRequests[data.req_id]) {
         const { resolve, reject } = pendingRequests[data.req_id];
         delete pendingRequests[data.req_id];
@@ -81,14 +218,14 @@ socket.onmessage = (event) => {
         }
     }
 
+    // Ongoing subscriptions
+    if (data.req_id && activeSubscriptions[data.req_id]) {
+        activeSubscriptions[data.req_id](data);
+    }
+
     if (data.error) {
         console.log(data.error);
         return;
-    }
-
-    if (data.msg_type === "balance" && data.balance) {
-        document.getElementById("accountBalance").textContent =
-            `${data.balance.balance} ${data.balance.currency}`;
     }
 
     if (!data.tick) return;
@@ -141,7 +278,7 @@ socket.onmessage = (event) => {
     document.getElementById("analysis").innerHTML = html;
 
     // =====================
-    // SIGNAL ENGINE
+    // SIGNAL ENGINE (analytics only — does not place trades automatically)
     // =====================
 
     if ([6,7,8,9].includes(digit)) {
@@ -168,14 +305,14 @@ socket.onmessage = (event) => {
 
         if (highStreak >= 3) {
 
-            signal = "🟢 BUY UNDER 6";
+            signal = "🟢 CONSIDER UNDER 6";
             signalLocked = true;
 
         }
 
         else if (lowStreak >= 3) {
 
-            signal = "🔵 BUY OVER 3";
+            signal = "🔵 CONSIDER OVER 3";
             signalLocked = true;
 
         }
@@ -194,34 +331,9 @@ socket.onmessage = (event) => {
 };
 
 socket.onerror = () => {
-
-    document.getElementById("status").textContent =
-        "🔴 Connection Error";
-
+    document.getElementById("status").textContent = "🔴 Connection Error";
 };
 
 socket.onclose = () => {
-
-    document.getElementById("status").textContent =
-        "🟠 Disconnected";
-
+    document.getElementById("status").textContent = "🟠 Disconnected";
 };
-
-document.getElementById("buyBtn").addEventListener("click", async () => {
-
-    try {
-
-        await buyDigitContract(
-            "DIGITUNDER",
-            6,
-            1
-        );
-
-    } catch (error) {
-
-        console.error(error);
-        alert(error.message || "Trade failed.");
-
-    }
-
-});

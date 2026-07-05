@@ -155,3 +155,88 @@ select{
     }
 
 }
+
+.field-label{
+    display:block;
+    color:#94a3b8;
+    font-size:13px;
+    margin:14px 0 6px;
+}
+
+input[type="number"],
+input[type="text"]{
+    width:100%;
+    padding:12px;
+    background:#0f172a;
+    color:white;
+    border:1px solid #334155;
+    border-radius:8px;
+}
+
+.duration-row{
+    display:flex;
+    gap:10px;
+}
+
+.duration-row input{
+    flex:1;
+}
+
+.duration-row select{
+    flex:1;
+}
+
+.empty-msg{
+    color:#64748b;
+    font-size:14px;
+}
+
+.position-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:#0f172a;
+    border:1px solid #334155;
+    border-radius:8px;
+    padding:12px;
+    margin-bottom:10px;
+}
+
+.position-sub{
+    color:#64748b;
+    font-size:12px;
+    margin-top:2px;
+}
+
+.sell-btn{
+    background:#ef4444;
+    padding:8px 14px;
+    font-size:13px;
+}
+
+.sell-btn:hover{
+    background:#dc2626;
+}
+
+.history-row{
+    display:flex;
+    justify-content:space-between;
+    padding:10px 0;
+    border-bottom:1px solid #334155;
+    font-size:14px;
+}
+
+.history-row:last-child{
+    border-bottom:none;
+}
+
+.profit-positive{
+    color:#22c55e;
+    font-weight:bold;
+}
+
+.profit-negative{
+    color:#ef4444;
+    font-weight:bold;
+}

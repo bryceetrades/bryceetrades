@@ -27,12 +27,12 @@
 
     <div class="stat-card">
         <h4>Market</h4>
-        <h2>R_100</h2>
+        <select id="marketSelect"></select>
     </div>
 
     <div class="stat-card">
         <h4>Status</h4>
-        <h2 id="status">🟢 Live</h2>
+        <h2 id="status">🟠 Disconnected</h2>
     </div>
 
 </div>
@@ -42,32 +42,49 @@
 <section class="left-panel">
 
     <div class="card">
-
         <h2>Live Digit</h2>
-
-        <div id="tick" class="live-digit">
-            -
-        </div>
-
+        <div id="tick" class="live-digit">-</div>
     </div>
 
     <div class="card">
+        <h2>Trade Setup</h2>
 
-        <h2>Trade Type</h2>
-
-        <select id="tradeType">
-            <option>Matches / Differs</option>
-            <option>Over / Under</option>
-            <option>Rise / Fall</option>
-            <option>Higher / Lower</option>
+        <label class="field-label">Trade Type</label>
+        <select id="tradeCategory">
+            <option value="callput_natural">Rise / Fall</option>
+            <option value="callput_barrier">Higher / Lower</option>
+            <option value="matchdiff">Matches / Differs</option>
+            <option value="overunder">Over / Under</option>
+            <option value="evenodd">Even / Odd</option>
         </select>
 
-        <br><br>
+        <label class="field-label">Direction</label>
+        <select id="tradeDirection"></select>
 
-        <button id="buyBtn">
-            BUY
-        </button>
+        <div id="predictionRow" class="field-row" style="display:none">
+            <label class="field-label">Prediction Digit (0-9)</label>
+            <input type="number" id="predictionDigit" min="0" max="9" value="5">
+        </div>
 
+        <div id="barrierRow" class="field-row" style="display:none">
+            <label class="field-label">Barrier Offset</label>
+            <input type="text" id="barrierOffset" value="+0.50">
+        </div>
+
+        <label class="field-label">Stake (USD)</label>
+        <input type="number" id="stake" min="0.35" step="0.01" value="1">
+
+        <label class="field-label">Duration</label>
+        <div class="duration-row">
+            <input type="number" id="duration" min="1" value="5">
+            <select id="durationUnit">
+                <option value="t">Ticks</option>
+                <option value="s">Seconds</option>
+                <option value="m">Minutes</option>
+            </select>
+        </div>
+
+        <button id="buyBtn">PLACE TRADE</button>
     </div>
 
 </section>
@@ -75,35 +92,36 @@
 <section class="right-panel">
 
     <div class="card">
-
         <h2>Digit Analysis</h2>
-
-        <div id="analysis">
-
-        </div>
-
+        <div id="analysis"></div>
     </div>
 
     <div class="card">
-
         <h2>Trade Signals</h2>
+        <div id="signals">Waiting for analysis...</div>
+    </div>
 
-        <div id="signals">
-
-            Waiting for analysis...
-
+    <div class="card">
+        <h2>Open Positions</h2>
+        <div id="openPositions">
+            <p class="empty-msg">No open positions</p>
         </div>
+    </div>
 
+    <div class="card">
+        <h2>Trade History</h2>
+        <div id="tradeHistory">
+            <p class="empty-msg">No trades yet</p>
+        </div>
     </div>
 
 </section>
 
 </main>
 
-
-
-</body><script src="config.js"></script>
+</body>
+<script src="config.js"></script>
 <script src="auth.js"></script>
-<script src="trading.js"></script>
 <script src="app.js"></script>
+<script src="trading.js"></script>
 </html>
