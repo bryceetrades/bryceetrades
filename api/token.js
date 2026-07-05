@@ -4,8 +4,10 @@ export default async function handler(req, res) {
     }
 
     const { code, verifier } = req.body;
+    const CLIENT_ID = "33zqFdSUnH9jY0bjdm8Vn";
+    const REDIRECT_URI = "https://bryceetrades-kimsmercy496-2389s-projects.vercel.app";
 
-    // Exchange OAuth code
+    // 1. Exchange OAuth code for an access token
     const tokenResponse = await fetch(
         "https://auth.deriv.com/oauth2/token",
         {
@@ -15,11 +17,10 @@ export default async function handler(req, res) {
             },
             body: new URLSearchParams({
                 grant_type: "authorization_code",
-                client_id: "33zqFdSUnH9jY0bjdm8Vn",
+                client_id: CLIENT_ID,
                 code,
                 code_verifier: verifier,
-                redirect_uri:
-                    "https://bryceetrades-kimsmercy496-2389s-projects.vercel.app"
+                redirect_uri: REDIRECT_URI
             })
         }
     );
@@ -30,21 +31,19 @@ export default async function handler(req, res) {
         return res.status(tokenResponse.status).json(tokenData);
     }
 
-    // Get Options account
+    // 2. Get the user's Options account(s)
     const accountsResponse = await fetch(
         "https://api.derivws.com/trading/v1/options/accounts",
         {
             headers: {
                 Authorization: `Bearer ${tokenData.access_token}`,
-                "Deriv-App-ID": "33zqFdSUnH9jY0bjdm8Vn"
+                "Deriv-App-ID": CLIENT_ID
             }
         }
     );
 
     const accountsData = await accountsResponse.json();
-
-    const account =
-        accountsData.data && accountsData.data[0];
+    const account = accountsData.data && accountsData.data[0];
 
     if (!account) {
         return res.status(500).json({
@@ -53,25 +52,32 @@ export default async function handler(req, res) {
         });
     }
 
-    // Get OTP WebSocket URL
+    // 3. Get a one-time-password WebSocket URL for that account.
+    // This URL (not the classic ws.derivws.com endpoint) is what the
+    // frontend must connect to for ticks, balance, and trading.
     const otpResponse = await fetch(
         `https://api.derivws.com/trading/v1/options/accounts/${account.account_id}/otp`,
         {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${tokenData.access_token}`,
-                "Deriv-App-ID": "33zqFdSUnH9jY0bjdm8Vn"
+                "Deriv-App-ID": CLIENT_ID
             }
         }
     );
 
     const otpData = await otpResponse.json();
-    console.log("OTP Response:", otpData);
 
+    if (!otpData.url) {
+        return res.status(500).json({
+            error: "Failed to generate OTP WebSocket URL",
+            otp: otpData
+        });
+    }
 
     return res.status(200).json({
         access_token: tokenData.access_token,
         account,
-        otpDatadata
+        ws_url: otpData.url
     });
 }

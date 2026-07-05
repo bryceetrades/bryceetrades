@@ -1,20 +1,30 @@
-const APP_ID = CONFIG.WS_APP_ID;
-
 // =====================
-// DERIV LOGIN
+// SOCKET CONNECTION
 // =====================
+// Two possible endpoints for the Options API:
+//  - Public (no login, ticks only):  wss://api.derivws.com/trading/v1/options/ws/public
+//  - Authenticated (after login):    the ws_url returned by the OTP step in api/token.js,
+//                                    already saved to localStorage as "deriv_ws_url"
 
-document.getElementById("loginBtn").addEventListener("click", () => {
-    login();
-});
+const PUBLIC_WS_URL = "wss://api.derivws.com/trading/v1/options/ws/public";
+const authedWsUrl = localStorage.getItem("deriv_ws_url");
 
-// =====================
-// LIVE TICKS
-// =====================
+const socket = new WebSocket(authedWsUrl || PUBLIC_WS_URL);
 
-const socket = new WebSocket(
-    `wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`
-);
+// --- Request/response tracker -----------------------------------------
+// Lets trading.js do `await sendRequest({...})` instead of juggling
+// raw onmessage callbacks. The Deriv API echoes back req_id.
+let reqCounter = 1;
+const pendingRequests = {};
+
+function sendRequest(payload) {
+    return new Promise((resolve, reject) => {
+        const req_id = reqCounter++;
+        pendingRequests[req_id] = { resolve, reject };
+        socket.send(JSON.stringify({ ...payload, req_id }));
+    });
+}
+// -----------------------------------------------------------------------
 
 let last100Digits = [];
 let highStreak = 0;
@@ -23,27 +33,35 @@ let signalLocked = false;
 
 socket.onopen = () => {
 
-    console.log("Connected");
+    console.log("Connected to:", authedWsUrl ? "authenticated socket" : "public socket");
 
-    // Load saved account
-    const account = JSON.parse(localStorage.getItem("deriv_account"));
+    if (authedWsUrl) {
 
-    if (account) {
+        const account = JSON.parse(localStorage.getItem("deriv_account") || "null");
 
-        document.getElementById("accountBalance").textContent =
-            `${account.balance} ${account.currency}`;
+        if (account) {
+            document.getElementById("status").textContent =
+                `🟢 ${account.account_id}`;
 
-        document.getElementById("status").textContent =
-            `🟢 ${account.account_id}`;
+            const loginBtn = document.getElementById("loginBtn");
+            loginBtn.textContent = "✅ Logged In";
+            loginBtn.disabled = true;
+        }
 
-        const loginBtn = document.getElementById("loginBtn");
-        loginBtn.textContent = "✅ Logged In";
-        loginBtn.disabled = true;
+        sendRequest({ balance: 1, subscribe: 1 })
+            .then((data) => {
+                document.getElementById("accountBalance").textContent =
+                    `${data.balance.balance} ${data.balance.currency}`;
+            })
+            .catch((err) => {
+                console.error("Balance request failed:", err);
+            });
     }
 
-    // ONLY subscribe to ticks
+    // Ticks work on both the public and authenticated socket
     socket.send(JSON.stringify({
-        ticks: CONFIG.SYMBOL
+        ticks: CONFIG.SYMBOL,
+        subscribe: 1
     }));
 };
 
@@ -51,10 +69,26 @@ socket.onmessage = (event) => {
 
     const data = JSON.parse(event.data);
 
-    // Ignore errors
+    // Resolve/reject any pending promise-based request (balance/proposal/buy/etc.)
+    if (data.req_id && pendingRequests[data.req_id]) {
+        const { resolve, reject } = pendingRequests[data.req_id];
+        delete pendingRequests[data.req_id];
+
+        if (data.error) {
+            reject(data.error);
+        } else {
+            resolve(data);
+        }
+    }
+
     if (data.error) {
         console.log(data.error);
         return;
+    }
+
+    if (data.msg_type === "balance" && data.balance) {
+        document.getElementById("accountBalance").textContent =
+            `${data.balance.balance} ${data.balance.currency}`;
     }
 
     if (!data.tick) return;
