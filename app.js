@@ -1,4 +1,4 @@
-const APP_ID = "1089";
+const APP_ID = CONFIG.WS_APP_ID;
 
 // =====================
 // DERIV LOGIN
@@ -13,7 +13,7 @@ document.getElementById("loginBtn").addEventListener("click", () => {
 // =====================
 
 const socket = new WebSocket(
-    `wss://ws.derivws.com/websockets/v3?app_id=1089`
+    `wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`
 );
 
 let last100Digits = [];
@@ -173,8 +173,21 @@ socket.onclose = () => {
 
 };
 
-document.getElementById("buyBtn").addEventListener("click", () => {
+document.getElementById("buyBtn").addEventListener("click", async () => {
 
-    alert("Trading engine coming next...");
+    try {
+
+        await buyDigitContract(
+            "DIGITUNDER",
+            6,
+            1
+        );
+
+    } catch (error) {
+
+        console.error(error);
+        alert(error.message || "Trade failed.");
+
+    }
 
 });
