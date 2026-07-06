@@ -174,17 +174,20 @@ input[type="number"],input[type="text"]{
 .recent-chip.rise{background:#14532d;}
 .recent-chip.fall{background:#7f1d1d;}
 
-.digit-circle-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+.digit-circle-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;row-gap:16px;}
 
-.digit-grid-wrapper{position:relative;}
+.digit-grid-wrapper{position:relative;padding-top:14px;}
 .digit-cursor{
     position:absolute;top:0;left:0;
-    border:2px solid var(--cyan);
-    border-radius:50%;
-    box-shadow:0 0 10px rgba(56,189,248,.6);
-    transition:left .3s ease, top .3s ease, width .3s ease, height .3s ease;
+    width:0;height:0;
+    border-left:7px solid transparent;
+    border-right:7px solid transparent;
+    border-top:10px solid var(--cyan);
+    transform:translate(-50%,-100%);
+    transition:left .3s ease, top .3s ease;
     pointer-events:none;
     opacity:0;
+    filter:drop-shadow(0 0 4px rgba(56,189,248,.7));
 }
 .digit-cursor.visible{opacity:1;}
 
@@ -229,8 +232,8 @@ input[type="number"],input[type="text"]{
 .digit-circle .pct{font-size:10px;color:#64748b;margin-top:2px;}
 .digit-circle.current{background:var(--cyan);border-color:var(--cyan);}
 .digit-circle.current .val,.digit-circle.current .pct{color:#04202e;}
-.digit-circle.highest{border-color:var(--green);box-shadow:0 0 0 1px var(--green);}
-.digit-circle.lowest{border-color:var(--red);box-shadow:0 0 0 1px var(--red);}
+.digit-circle.highest{border-color:var(--green);box-shadow:0 0 0 2px #0b0f1a, 0 0 0 5px var(--green);}
+.digit-circle.lowest{border-color:var(--red);box-shadow:0 0 0 2px #0b0f1a, 0 0 0 5px var(--red);}
 
 .split-stat{margin-bottom:18px;}
 .split-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;color:#cbd5e1;}
