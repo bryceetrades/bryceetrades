@@ -638,4 +638,6 @@ socket.onerror = () => {
 };
 
 socket.onclose = () => {
-  document.getElementById("stat
+  document.getElementById("stattus").textContent = "ðŸ”´ Disconnected";
+    logEvent("Disconnected");
+};
