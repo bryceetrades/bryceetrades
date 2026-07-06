@@ -342,6 +342,15 @@ document.getElementById("overUnderBarrier").addEventListener("input", renderAnal
 // --- Open positions / trade history ---------------------------------------
 const openPositions = {}; // contract_id -> latest proposal_open_contract data
 
+// Lets the bot loop "await" a specific contract's settlement instead of
+// polling — resolved from inside the subscribeToContract callback below.
+const settlementWaiters = {}; // contract_id -> resolve function
+function waitForSettlement(contractId) {
+    return new Promise((resolve) => {
+        settlementWaiters[contractId] = resolve;
+    });
+}
+
 function subscribeToContract(contract_id) {
     sendSubscription(
         { proposal_open_contract: 1, contract_id },
@@ -361,18 +370,22 @@ function subscribeToContract(contract_id) {
                 const profit = Number(poc.profit || 0);
                 recordTradeResult(profit);
 
-                // Field names for the exact exit price aren't 100% confirmed on this
-                // API — fall back to the last known live digit if they're missing.
+                // Only flash if we can confirm the exact digit the price settled
+                // on. Falling back to "whatever's live now" would flash the
+                // wrong digit — the instant local flash (tick-based digit
+                // contracts) already covers those correctly on its own.
                 const exitPrice = poc.exit_tick ?? poc.sell_spot;
-                const settledDigit = exitPrice != null
-                    ? Number(Number(exitPrice).toFixed(2).slice(-1))
-                    : (tickWindow.length ? tickWindow[tickWindow.length - 1].digit : null);
-
-                if (settledDigit !== null) {
+                if (exitPrice != null) {
+                    const settledDigit = Number(Number(exitPrice).toFixed(2).slice(-1));
                     flashDigitResult(settledDigit, profit >= 0);
                 }
 
                 showTradeToast(Number(poc.buy_price || 0), profit);
+
+                if (settlementWaiters[contract_id]) {
+                    settlementWaiters[contract_id]({ profit });
+                    delete settlementWaiters[contract_id];
+                }
             } else {
                 openPositions[contract_id] = poc;
             }

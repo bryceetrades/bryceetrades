@@ -94,6 +94,17 @@
             <div class="two-col">
 
                 <div>
+                    <div class="card" id="botControlCard">
+                        <div class="card-header-row">
+                            <h2>Bot Control</h2>
+                            <span id="botStatus">⚪ Stopped</span>
+                        </div>
+                        <div class="stats" style="margin-bottom:0;grid-template-columns:1fr 1fr;">
+                            <div class="stat-card"><h4>Session P&L</h4><h2 id="botSessionPnl">+0.00 USD</h2></div>
+                            <div class="stat-card"><h4>Trades This Run</h4><h2 id="botTradesCount">0</h2></div>
+                        </div>
+                    </div>
+
                     <div class="accordion open" data-accordion>
                         <button class="accordion-head">PURCHASE CONDITIONS <span class="chevron">▾</span></button>
                         <div class="accordion-body">
@@ -135,9 +146,21 @@
                     </div>
 
                     <div class="accordion" data-accordion>
-                        <button class="accordion-head">RISK MANAGEMENT <span class="badge-soon">Coming soon</span> <span class="chevron">▾</span></button>
+                        <button class="accordion-head">RISK MANAGEMENT <span class="chevron">▾</span></button>
                         <div class="accordion-body">
-                            <p class="empty-msg">Stop loss / take profit for automated sessions will live here once auto-trading ships.</p>
+                            <p class="empty-msg">Applies only when the bot is running — leave a field blank/0 for no limit.</p>
+                            <div class="duration-row">
+                                <div style="flex:1">
+                                    <label class="field-label">Stop Loss (USD)</label>
+                                    <input type="number" id="botStopLoss" value="20" min="0">
+                                </div>
+                                <div style="flex:1">
+                                    <label class="field-label">Take Profit (USD)</label>
+                                    <input type="number" id="botTakeProfit" value="10" min="0">
+                                </div>
+                            </div>
+                            <label class="field-label">Max Trades (0 = unlimited)</label>
+                            <input type="number" id="botMaxTrades" value="20" min="0">
                         </div>
                     </div>
 
@@ -259,8 +282,9 @@
 <div id="tradeToast" class="trade-toast"></div>
 
 <div class="action-bar" id="tab-bot-actionbar" style="display:none">
-    <div class="action-bar-inner">
+    <div class="action-bar-inner action-bar-split">
         <button id="buyBtn">PLACE TRADE</button>
+        <button id="runBotBtn" class="run-bot-btn">▶ RUN BOT</button>
     </div>
 </div>
 
