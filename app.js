@@ -1,7 +1,7 @@
 // =====================
 // UI CHROME (tabs, sidebar, accordions, logs, logout)
 // =====================
-// Pure UI wiring â€” doesn't touch the socket/trading logic below.
+// Pure UI wiring — doesn't touch the socket/trading logic below.
 
 function logEvent(msg) {
   const panel = document.getElementById("logsPanel");
@@ -96,7 +96,7 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
       .then((r) => r.json())
       .then((data) => {
         if (!data.ws_url) {
-          note.textContent = "Switch failed â€” see console.";
+          note.textContent = "Switch failed — see console.";
           console.error(data);
           return;
         }
@@ -105,7 +105,7 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
         location.reload();
       })
       .catch((err) => {
-        note.textContent = "Switch failed â€” see console.";
+        note.textContent = "Switch failed — see console.";
         console.error(err);
       });
   }
@@ -156,6 +156,32 @@ renderDailyStats();
 
 // --- Live price chart (simple line chart, canvas) -------------------------
 let priceHistory = [];
+
+// Trades on tick-based digit contracts (Matches/Differs, Over/Under, Even/Odd
+// with duration_unit "t") can be evaluated the instant the settling tick
+// arrives — we already know the contract's rule, so there's no need to wait
+// for the server's confirmation just to flash the result.
+const pendingTickContracts = []; // { contract_type, barrier, ticksRemaining }
+
+function evaluateDigitContract(contractType, barrier, digit) {
+  const b = Number(barrier);
+  switch (contractType) {
+    case "DIGITMATCH":
+      return digit === b;
+    case "DIGITDIFF":
+      return digit !== b;
+    case "DIGITOVER":
+      return digit > b;
+    case "DIGITUNDER":
+      return digit < b;
+    case "DIGITEVEN":
+      return digit % 2 === 0;
+    case "DIGITODD":
+      return digit % 2 !== 0;
+    default:
+      return null; // not a digit contract — can't evaluate locally
+  }
+}
 
 function drawChart() {
   const canvas = document.getElementById("priceChart");
@@ -226,8 +252,8 @@ function sendSubscription(payload, onUpdate) {
 
 function safeSend(payload) {
   if (socket.readyState !== WebSocket.OPEN) {
-    console.warn("Not connected â€” skipped send:", payload);
-    document.getElementById("status").textContent = "ðŸŸ  Disconnected";
+    console.warn("Not connected — skipped send:", payload);
+    document.getElementById("status").textContent = "🟠 Disconnected";
     return false;
   }
   socket.send(JSON.stringify(payload));
@@ -359,7 +385,7 @@ function subscribeToContract(contract_id) {
       recordTradeResult(profit);
 
       // Field names for the exact exit price aren't 100% confirmed on this
-      // API â€” fall back to the last known live digit if they're missing.
+      // API — fall back to the last known live digit if they're missing.
       const exitPrice = poc.exit_tick ?? poc.sell_spot;
       const settledDigit =
         exitPrice != null
@@ -446,11 +472,11 @@ socket.onopen = () => {
     if (account) {
       document.getElementById(
         "status"
-      ).textContent = `ðŸŸ¢ ${account.account_id}`;
+      ).textContent = `🟢 ${account.account_id}`;
       logEvent(`Authorized as ${account.account_id}`);
 
       const loginBtn = document.getElementById("loginBtn");
-      loginBtn.textContent = "âœ… Logged In";
+      loginBtn.textContent = "✅ Logged In";
       loginBtn.disabled = true;
     }
 
@@ -526,10 +552,21 @@ socket.onmessage = (event) => {
   if (priceHistory.length > 60) priceHistory.shift();
   drawChart();
 
+  // Instantly evaluate any tick-based digit contracts settling on this tick
+  for (let i = pendingTickContracts.length - 1; i >= 0; i--) {
+    const pc = pendingTickContracts[i];
+    pc.ticksRemaining--;
+    if (pc.ticksRemaining <= 0) {
+      const isWin = evaluateDigitContract(pc.contract_type, pc.barrier, digit);
+      if (isWin !== null) flashDigitResult(digit, isWin);
+      pendingTickContracts.splice(i, 1);
+    }
+  }
+
   renderAnalysis();
 
   // =====================
-  // SIGNAL ENGINE (analytics only â€” does not place trades automatically)
+  // SIGNAL ENGINE (analytics only — does not place trades automatically)
   // =====================
 
   if ([6, 7, 8, 9].includes(digit)) {
@@ -544,14 +581,14 @@ socket.onmessage = (event) => {
     signalLocked = false;
   }
 
-  let signal = "âšª WAIT";
+  let signal = "⚪ WAIT";
 
   if (!signalLocked) {
     if (highStreak >= 3) {
-      signal = "ðŸŸ¢ CONSIDER UNDER 6";
+      signal = "🟢 CONSIDER UNDER 6";
       signalLocked = true;
     } else if (lowStreak >= 3) {
-      signal = "ðŸ”µ CONSIDER OVER 3";
+      signal = "🔵 CONSIDER OVER 3";
       signalLocked = true;
     }
   }
@@ -658,10 +695,12 @@ function positionDigitCursor(digit) {
   if (!circles.length || !cursor) return;
 
   const target = circles[digit];
-  const wrapper = cursor.parentElement;
-  const targetCenter = target.offsetLeft + target.offsetWidth / 2;
 
-  cursor.style.left = targetCenter + "px";
+  cursor.style.left = target.offsetLeft + "px";
+  cursor.style.top = target.offsetTop + "px";
+  cursor.style.width = target.offsetWidth + "px";
+  cursor.style.height = target.offsetHeight + "px";
+  cursor.classList.add("visible");
 }
 
 // --- Flash the digit a trade settled on: green for a win, red for a loss ---
@@ -690,11 +729,11 @@ function showTradeToast(stake, profit) {
 }
 
 socket.onerror = () => {
-  document.getElementById("status").textContent = "ðŸ”´ Connection Error";
+  document.getElementById("status").textContent = "🔴 Connection Error";
   logEvent("Connection error");
 };
 
 socket.onclose = () => {
-  document.getElementById("status").textContent = "ðŸŸ  Disconnected";
+  document.getElementById("status").textContent = "🟠 Disconnected";
   logEvent("Disconnected");
 };
