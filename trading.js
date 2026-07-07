@@ -157,6 +157,31 @@ document.getElementById("buyBtn").addEventListener("click", placeTrade);
 let botRunning = false;
 let botSessionPnl = 0;
 let botTradesCount = 0;
+const botTradeLog = []; // { id, contract_type, stake, status: 'pending'|'won'|'lost'|'error' }
+
+function renderBotTradeFeed() {
+    const container = document.getElementById("botTradeFeed");
+    if (!container) return;
+
+    if (botTradeLog.length === 0) {
+        container.innerHTML = `<p class="empty-msg">No trades yet this run</p>`;
+        return;
+    }
+
+    container.innerHTML = botTradeLog.slice(-8).reverse().map(t => {
+        let badge = "⏳ Pending";
+        let cls = "";
+
+        if (t.status === "won") { badge = `✅ +${t.profit.toFixed(2)} USD`; cls = "profit-positive"; }
+        if (t.status === "lost") { badge = `❌ ${t.profit.toFixed(2)} USD`; cls = "profit-negative"; }
+        if (t.status === "error") { badge = "⚠️ Error"; }
+
+        return `<div class="history-row">
+            <span>${t.contract_type} · stake ${t.stake.toFixed(2)}</span>
+            <span class="${cls}">${badge}</span>
+        </div>`;
+    }).join("");
+}
 
 function updateBotStatusUI() {
     const statusEl = document.getElementById("botStatus");
@@ -193,6 +218,14 @@ async function runBotLoop() {
     if (takeProfit && botSessionPnl >= takeProfit) return stopBot("take profit reached");
     if (maxTrades && botTradesCount >= maxTrades) return stopBot("max trades reached");
 
+    const feedEntry = {
+        contract_type: document.getElementById("tradeDirection").value,
+        stake: Number(document.getElementById("stake").value) || 0,
+        status: "pending"
+    };
+    botTradeLog.push(feedEntry);
+    renderBotTradeFeed();
+
     try {
         const bought = await executeTrade();
 
@@ -205,8 +238,14 @@ async function runBotLoop() {
         botSessionPnl += result.profit;
         updateBotStatusUI();
 
+        feedEntry.status = result.profit >= 0 ? "won" : "lost";
+        feedEntry.profit = result.profit;
+        renderBotTradeFeed();
+
     } catch (err) {
         console.error(err);
+        feedEntry.status = "error";
+        renderBotTradeFeed();
         logEvent(`Bot error: ${err.message || "unknown error"} — retrying shortly`);
         await new Promise(resolve => setTimeout(resolve, 2000));
     }
@@ -234,6 +273,8 @@ document.getElementById("runBotBtn").addEventListener("click", () => {
     botRunning = true;
     botSessionPnl = 0;
     botTradesCount = 0;
+    botTradeLog.length = 0;
+    renderBotTradeFeed();
     logEvent("Bot started");
     updateBotStatusUI();
     runBotLoop();

@@ -52,9 +52,12 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
 // --- Real/Demo account switching -----------------------------------------
 (function initAccountSwitch() {
     const account = JSON.parse(localStorage.getItem("deriv_account") || "null");
+    const accountsForDebug = JSON.parse(localStorage.getItem("deriv_accounts") || "[]");
     const demoBtn = document.getElementById("switchDemo");
     const realBtn = document.getElementById("switchReal");
     const note = document.getElementById("accountSwitchNote");
+
+    console.log("Deriv accounts on this login:", accountsForDebug);
 
     if (account) {
         demoBtn.classList.toggle("active", account.account_type === "demo");
@@ -64,10 +67,19 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
     function switchAccount(targetType) {
         const accounts = JSON.parse(localStorage.getItem("deriv_accounts") || "[]");
         const accessToken = localStorage.getItem("deriv_token");
-        const target = accounts.find(a => a.account_type === targetType);
+
+        // Some Deriv account_type values for real accounts aren't literally
+        // "real" (could be a regional/regulatory variant) — treat anything
+        // that isn't demo as "real" instead of requiring an exact match.
+        const target = targetType === "demo"
+            ? accounts.find(a => a.account_type === "demo")
+            : accounts.find(a => a.account_type !== "demo");
 
         if (!target) {
-            note.textContent = `No ${targetType} account found on this login.`;
+            note.textContent = accounts.length
+                ? `No ${targetType} account found — see console for what this login actually has.`
+                : "No account list found — try logging out and back in.";
+            console.log("Deriv accounts available:", accounts);
             return;
         }
         if (!accessToken) {

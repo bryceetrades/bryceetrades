@@ -63,6 +63,12 @@ button{cursor:pointer;font-family:inherit;}
     padding:8px 10px;font-size:13px;
 }
 
+.signup-link{
+    color:var(--cyan);font-size:12px;font-weight:600;
+    text-decoration:none;white-space:nowrap;
+}
+.signup-link:hover{text-decoration:underline;}
+
 #loginBtn{
     background:var(--cyan);color:#04202e;border:none;
     padding:10px 16px;border-radius:10px;font-weight:700;font-size:13px;

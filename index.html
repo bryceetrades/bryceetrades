@@ -19,6 +19,7 @@
             <span class="balance-label">Balance</span>
             <span id="accountBalance">$0.00</span>
         </div>
+        <a href="https://deriv.com/signup" target="_blank" rel="noopener" class="signup-link">Sign up for Deriv</a>
         <button id="loginBtn">Login with Deriv</button>
     </div>
 </header>
@@ -103,6 +104,9 @@
                             <div class="stat-card"><h4>Session P&L</h4><h2 id="botSessionPnl">+0.00 USD</h2></div>
                             <div class="stat-card"><h4>Trades This Run</h4><h2 id="botTradesCount">0</h2></div>
                         </div>
+
+                        <h4 style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px;">Live Trades</h4>
+                        <div id="botTradeFeed"><p class="empty-msg">No trades yet this run</p></div>
                     </div>
 
                     <div class="accordion open" data-accordion>
@@ -273,6 +277,10 @@
                 <h2>Account</h2>
                 <p id="settingsAccountInfo" class="empty-msg">Not logged in</p>
                 <button id="logoutBtn" class="danger-btn">Log Out</button>
+                <p class="empty-msg" style="margin-top:14px;">
+                    Don't have a Deriv account yet?
+                    <a href="https://deriv.com/signup" target="_blank" rel="noopener" class="signup-link">Sign up here</a>.
+                </p>
             </div>
         </section>
 
