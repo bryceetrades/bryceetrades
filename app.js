@@ -150,6 +150,67 @@ function renderDailyStats(stats) {
     document.getElementById("tradesToday").textContent = stats.trades;
 }
 
+// --- AI Trading Bot overview (Dashboard tab) ------------------------------
+// Sourced entirely from the Auto Trading Engine's own trade history
+// (autoEngineResults, from aisignal.js) — distinct from the site-wide
+// Today's P&L card above, which includes manual trades too.
+function pulseStat(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const card = el.closest(".stat-card");
+    if (!card) return;
+    card.classList.remove("pulse");
+    void card.offsetWidth; // restart the animation
+    card.classList.add("pulse");
+}
+
+function renderBotDashboard() {
+    if (typeof autoEngineResults === "undefined") return; // aisignal.js not loaded yet
+
+    const strategyLabels = { A: "Strategy A — Under 6", B: "Strategy B — Over 3", both: "Both Strategies" };
+    const strategySelect = document.getElementById("autoStrategySelect");
+    const statusLabels = {
+        stopped: "⚪ Stopped",
+        running: "🟢 Running",
+        paused:  "🟡 Paused"
+    };
+
+    document.getElementById("dashBotStatus").textContent =
+        statusLabels[typeof autoEngineState !== "undefined" ? autoEngineState : "stopped"];
+
+    document.getElementById("dashStrategy").textContent =
+        strategySelect ? strategyLabels[strategySelect.value] : "—";
+
+    document.getElementById("dashConfidence").textContent =
+        (typeof lastConfidenceScore === "number") ? lastConfidenceScore + "%" : "—";
+
+    const total = autoEngineResults.length;
+    const wins = autoEngineResults.filter(r => r.profit > 0).length;
+    const losses = autoEngineResults.filter(r => r.profit <= 0).length;
+    const winRate = total ? ((wins / total) * 100).toFixed(1) : "0.0";
+    const todayPnl = typeof getTodayAutoPnl === "function" ? getTodayAutoPnl() : 0;
+    const avgDuration = typeof getAverageTradeDurationSeconds === "function" ? getAverageTradeDurationSeconds() : null;
+
+    const botPnlEl = document.getElementById("dashBotPnl");
+    botPnlEl.textContent = (todayPnl >= 0 ? "+" : "") + todayPnl.toFixed(2) + " USD";
+    botPnlEl.className = todayPnl >= 0 ? "profit-positive" : "profit-negative";
+
+    document.getElementById("dashWinRate").textContent = winRate + "%";
+    document.getElementById("dashTotalTrades").textContent = total;
+    document.getElementById("dashAvgDuration").textContent =
+        avgDuration !== null ? avgDuration.toFixed(1) + "s" : "—";
+
+    document.getElementById("dashWins").textContent = wins;
+    document.getElementById("dashLosses").textContent = losses;
+    document.getElementById("dashConsecWins").textContent =
+        typeof getConsecutiveWins === "function" ? getConsecutiveWins() : 0;
+    document.getElementById("dashConsecLosses").textContent =
+        typeof getConsecutiveLosses === "function" ? getConsecutiveLosses() : 0;
+
+    ["dashBotPnl", "dashWinRate", "dashTotalTrades", "dashWins", "dashLosses"]
+        .forEach(pulseStat);
+}
+
 renderDailyStats();
 
 // --- Live price chart (simple line chart, canvas) -------------------------

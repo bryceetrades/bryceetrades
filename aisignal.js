@@ -20,9 +20,10 @@ const autoEngineResults = [];   // { profit, timestamp } — this engine's own t
 const signalOccurrences = {};   // signalKey -> [timestamps this exact setup has fired recently]
 let lastAutoTradeTime = null;
 
-function recordAutoTradeResult(profit) {
-    autoEngineResults.push({ profit, timestamp: Date.now() });
+function recordAutoTradeResult(profit, durationMs) {
+    autoEngineResults.push({ profit, timestamp: Date.now(), durationMs: durationMs || 0 });
     if (autoEngineResults.length > 50) autoEngineResults.shift();
+    if (typeof renderBotDashboard === "function") renderBotDashboard();
 }
 
 function markTradeExecutedNow() {
@@ -51,6 +52,21 @@ function getConsecutiveLosses() {
         else break;
     }
     return streak;
+}
+
+function getConsecutiveWins() {
+    let streak = 0;
+    for (let i = autoEngineResults.length - 1; i >= 0; i--) {
+        if (autoEngineResults[i].profit > 0) streak++;
+        else break;
+    }
+    return streak;
+}
+
+function getAverageTradeDurationSeconds() {
+    if (autoEngineResults.length === 0) return null;
+    const total = autoEngineResults.reduce((sum, r) => sum + (r.durationMs || 0), 0);
+    return (total / autoEngineResults.length) / 1000;
 }
 
 function getVolatility(sampleSize = 30) {
@@ -158,7 +174,11 @@ function computeConfidence(signalKey) {
     return { score, reasons };
 }
 
+let lastConfidenceScore = null; // read by the Dashboard tab
+
 function renderConfidence(score, reasons) {
+    lastConfidenceScore = score;
+
     const scoreEl = document.getElementById("aiConfidenceScore");
     const barEl = document.getElementById("aiConfidenceBar");
     const reasonEl = document.getElementById("aiConfidenceReason");
@@ -171,4 +191,6 @@ function renderConfidence(score, reasons) {
     }
 
     if (reasonEl) reasonEl.textContent = reasons.join(" · ");
+
+    if (typeof renderBotDashboard === "function") renderBotDashboard();
 }

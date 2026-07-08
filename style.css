@@ -310,8 +310,19 @@ input[type="number"],input[type="text"]{
 .quick-fall{background:var(--red);}
 .quick-fall:hover{background:#dc2626;}
 
+.stats-3col{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:15px;}
+.stats-4col{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:15px;}
+
+@keyframes statPulse{
+    0%{background:rgba(56,189,248,.18);}
+    100%{background:transparent;}
+}
+.stat-card.pulse{animation:statPulse .6s ease;}
+
 @media(max-width:900px){
     .stats{grid-template-columns:1fr;}
+    .stats-3col{grid-template-columns:1fr 1fr;}
+    .stats-4col{grid-template-columns:1fr 1fr;}
     .two-col{grid-template-columns:1fr;}
     .sidebar{display:none;}
     .live-digit{font-size:60px;}

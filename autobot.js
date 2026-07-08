@@ -55,6 +55,8 @@ function updateAutoEngineUI() {
     document.getElementById("autoPauseBtn").disabled   = autoEngineState !== AUTO_ENGINE_STATE.RUNNING;
     document.getElementById("autoResumeBtn").disabled  = autoEngineState !== AUTO_ENGINE_STATE.PAUSED;
     document.getElementById("autoStopBtn").disabled    = autoEngineState === AUTO_ENGINE_STATE.STOPPED;
+
+    if (typeof renderBotDashboard === "function") renderBotDashboard();
 }
 
 // Called once per live tick from app.js, after the digit percentages
@@ -123,6 +125,7 @@ function checkStrategySignals() {
 async function fireAutoTrade(strategyName, contractType, barrier, digitsSeen) {
 
     autoEngineTradeInFlight = true;
+    const tradeStartTime = Date.now();
 
     const stake = Number(document.getElementById("stake").value) || 1;
     const reason = `digits [${digitsSeen.join(", ")}] all in range, both under 10% frequency`;
@@ -160,7 +163,7 @@ async function fireAutoTrade(strategyName, contractType, barrier, digitsSeen) {
             subscribeToContract(buyResponse.buy.contract_id);
 
             const result = await waitForSettlement(buyResponse.buy.contract_id);
-            recordAutoTradeResult(result.profit);
+            recordAutoTradeResult(result.profit, Date.now() - tradeStartTime);
             const outcome = result.profit >= 0 ? "WIN +" : "LOSS ";
             autoEngineLog(`Result: ${outcome}${result.profit.toFixed(2)} USD`);
 
@@ -214,3 +217,9 @@ document.getElementById("autoStopBtn").addEventListener("click", () => {
 });
 
 updateAutoEngineUI();
+
+document.getElementById("autoStrategySelect").addEventListener("change", () => {
+    if (typeof renderBotDashboard === "function") renderBotDashboard();
+});
+
+if (typeof renderBotDashboard === "function") renderBotDashboard();
