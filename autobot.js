@@ -88,11 +88,25 @@ function checkStrategySignals() {
     if (signalKey === lastSignalKey) return;
     lastSignalKey = signalKey;
 
-    if (matchesA) {
-        fireAutoTrade("A", "DIGITUNDER", 6, lastTwo);
-    } else if (matchesB) {
-        fireAutoTrade("B", "DIGITOVER", 3, lastTwo);
+    const strategyName = matchesA ? "A" : "B";
+    const contractType = matchesA ? "DIGITUNDER" : "DIGITOVER";
+    const barrier = matchesA ? 6 : 3;
+
+    recordSignalOccurrence(signalKey);
+    const { score, reasons } = computeConfidence(signalKey);
+    renderConfidence(score, reasons);
+
+    const threshold = Number(document.getElementById("aiConfidenceThreshold").value) || 80;
+
+    if (score < threshold) {
+        autoEngineLog(
+            `Skipped — Strategy ${strategyName} pattern matched but confidence ${score}% < threshold ${threshold}% (${reasons.join(", ")})`
+        );
+        return;
     }
+
+    autoEngineLog(`Strategy ${strategyName} signal — confidence ${score}% ≥ threshold ${threshold}%`);
+    fireAutoTrade(strategyName, contractType, barrier, lastTwo);
 }
 
 async function fireAutoTrade(strategyName, contractType, barrier, digitsSeen) {
@@ -101,7 +115,7 @@ async function fireAutoTrade(strategyName, contractType, barrier, digitsSeen) {
 
     const stake = Number(document.getElementById("stake").value) || 1;
     const reason = `digits [${digitsSeen.join(", ")}] all in range, both under 10% frequency`;
-    autoEngineLog(`Strategy ${strategyName} signal — ${reason}`);
+    autoEngineLog(`Entering — ${reason}`);
 
     try {
         // Tick-based digit contract → eligible for the instant local flash too
@@ -128,12 +142,14 @@ async function fireAutoTrade(strategyName, contractType, barrier, digitsSeen) {
             price: stake
         });
 
+        markTradeExecutedNow();
         autoEngineLog(`Trade placed — ${contractType} ${barrier}, stake ${stake.toFixed(2)}`);
 
         if (buyResponse.buy && buyResponse.buy.contract_id) {
             subscribeToContract(buyResponse.buy.contract_id);
 
             const result = await waitForSettlement(buyResponse.buy.contract_id);
+            recordAutoTradeResult(result.profit);
             const outcome = result.profit >= 0 ? "WIN +" : "LOSS ";
             autoEngineLog(`Result: ${outcome}${result.profit.toFixed(2)} USD`);
         }
