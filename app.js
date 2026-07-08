@@ -556,7 +556,12 @@ socket.onmessage = (event) => {
     if (priceHistory.length > 60) priceHistory.shift();
     drawChart();
 
-    // Instantly evaluate any tick-based digit contracts settling on this tick
+    renderAnalysis();
+
+    // Instantly evaluate any tick-based digit contracts settling on this tick.
+    // This must run AFTER renderAnalysis() — that function rebuilds the whole
+    // digit grid's HTML from scratch every tick, which would otherwise erase
+    // the flash class the instant it's added.
     for (let i = pendingTickContracts.length - 1; i >= 0; i--) {
         const pc = pendingTickContracts[i];
         pc.ticksRemaining--;
@@ -566,8 +571,6 @@ socket.onmessage = (event) => {
             pendingTickContracts.splice(i, 1);
         }
     }
-
-    renderAnalysis();
 
     // =====================
     // SIGNAL ENGINE (analytics only — does not place trades automatically)
