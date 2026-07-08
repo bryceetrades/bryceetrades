@@ -154,6 +154,7 @@ renderDailyStats();
 
 // --- Live price chart (simple line chart, canvas) -------------------------
 let priceHistory = [];
+let currentBalance = null; // numeric account balance, read by riskmanager.js
 
 // Trades on tick-based digit contracts (Matches/Differs, Over/Under, Even/Odd
 // with duration_unit "t") can be evaluated the instant the settling tick
@@ -488,6 +489,7 @@ socket.onopen = () => {
         sendSubscription({ balance: 1 }, (data) => {
             if (data.error) return console.error(data.error);
             if (data.balance) {
+                currentBalance = Number(data.balance.balance);
                 document.getElementById("accountBalance").textContent =
                     `${data.balance.balance} ${data.balance.currency}`;
             }

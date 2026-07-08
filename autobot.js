@@ -105,6 +105,17 @@ function checkStrategySignals() {
         return;
     }
 
+    const gate = checkPreTradeGate();
+
+    if (!gate.allow) {
+        if (gate.hardStop) {
+            triggerRiskStop(gate.reason);
+        } else {
+            autoEngineLog(`Skipped — ${gate.reason}`);
+        }
+        return;
+    }
+
     autoEngineLog(`Strategy ${strategyName} signal — confidence ${score}% ≥ threshold ${threshold}%`);
     fireAutoTrade(strategyName, contractType, barrier, lastTwo);
 }
@@ -152,6 +163,11 @@ async function fireAutoTrade(strategyName, contractType, barrier, digitsSeen) {
             recordAutoTradeResult(result.profit);
             const outcome = result.profit >= 0 ? "WIN +" : "LOSS ";
             autoEngineLog(`Result: ${outcome}${result.profit.toFixed(2)} USD`);
+
+            const stopReason = checkPostTradeStops();
+            if (stopReason) {
+                triggerRiskStop(stopReason);
+            }
         }
 
     } catch (err) {

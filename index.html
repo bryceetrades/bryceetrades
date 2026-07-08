@@ -150,6 +150,47 @@
                         <div id="autoEngineFeed"><p class="empty-msg">No signals yet</p></div>
                     </div>
 
+                    <div class="card" id="riskManagementCard">
+                        <h2>Risk Management</h2>
+                        <p class="empty-msg">Applies only to the Auto Trading Engine above. Leave any field at 0 for no limit.</p>
+
+                        <div class="duration-row">
+                            <div style="flex:1">
+                                <label class="field-label">Daily Profit Target (USD)</label>
+                                <input type="number" id="riskDailyProfitTarget" value="20" min="0">
+                            </div>
+                            <div style="flex:1">
+                                <label class="field-label">Daily Loss Limit (USD)</label>
+                                <input type="number" id="riskDailyLossLimit" value="20" min="0">
+                            </div>
+                        </div>
+
+                        <div class="duration-row">
+                            <div style="flex:1">
+                                <label class="field-label">Max Consecutive Losses</label>
+                                <input type="number" id="riskMaxConsecutiveLosses" value="5" min="0">
+                            </div>
+                            <div style="flex:1">
+                                <label class="field-label">Cooldown After Loss (seconds)</label>
+                                <input type="number" id="riskCooldownAfterLoss" value="30" min="0">
+                            </div>
+                        </div>
+
+                        <div class="duration-row">
+                            <div style="flex:1">
+                                <label class="field-label">Max Trades Per Hour</label>
+                                <input type="number" id="riskMaxTradesPerHour" value="30" min="0">
+                            </div>
+                            <div style="flex:1">
+                                <label class="field-label">Max Stake (USD)</label>
+                                <input type="number" id="riskMaxStake" value="5" min="0">
+                            </div>
+                        </div>
+
+                        <label class="field-label">Minimum Balance Before Stopping (USD)</label>
+                        <input type="number" id="riskMinBalance" value="0" min="0">
+                    </div>
+
                     <div class="accordion open" data-accordion>
                         <button class="accordion-head">PURCHASE CONDITIONS <span class="chevron">▾</span></button>
                         <div class="accordion-body">
@@ -343,5 +384,6 @@
 <script src="app.js"></script>
 <script src="trading.js"></script>
 <script src="aisignal.js"></script>
+<script src="riskmanager.js"></script>
 <script src="autobot.js"></script>
 </html>
