@@ -109,6 +109,38 @@
                         <div id="botTradeFeed"><p class="empty-msg">No trades yet this run</p></div>
                     </div>
 
+                    <div class="card" id="autoEngineCard">
+                        <div class="card-header-row">
+                            <h2>Auto Trading Engine</h2>
+                            <span id="autoEngineStatus">⚪ Stopped</span>
+                        </div>
+
+                        <p class="empty-msg">
+                            Pattern-based strategy — bets that a rare recent digit is "due."
+                            Digit outcomes here are close to independent each tick, so treat this
+                            as an experiment, not a guaranteed edge.
+                        </p>
+
+                        <label class="field-label">Strategy</label>
+                        <select id="autoStrategySelect">
+                            <option value="A">Strategy A — Under 6 (digits 6-9, both &lt;10%)</option>
+                            <option value="B">Strategy B — Over 3 (digits 0-3, both &lt;10%)</option>
+                            <option value="both">Both strategies</option>
+                        </select>
+
+                        <div class="duration-row" style="margin-top:14px;">
+                            <button id="autoStartBtn" class="quick-btn quick-rise">▶ Start</button>
+                            <button id="autoPauseBtn" class="quick-btn" style="background:var(--gold);color:#1c1207;">⏸ Pause</button>
+                        </div>
+                        <div class="duration-row" style="margin-top:10px;">
+                            <button id="autoResumeBtn" class="quick-btn" style="background:var(--cyan);color:#04202e;">⏵ Resume</button>
+                            <button id="autoStopBtn" class="quick-btn quick-fall">⏹ Stop</button>
+                        </div>
+
+                        <h4 style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px;">Signal Feed</h4>
+                        <div id="autoEngineFeed"><p class="empty-msg">No signals yet</p></div>
+                    </div>
+
                     <div class="accordion open" data-accordion>
                         <button class="accordion-head">PURCHASE CONDITIONS <span class="chevron">▾</span></button>
                         <div class="accordion-body">
@@ -301,4 +333,5 @@
 <script src="auth.js"></script>
 <script src="app.js"></script>
 <script src="trading.js"></script>
+<script src="autobot.js"></script>
 </html>

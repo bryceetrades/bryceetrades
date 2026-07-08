@@ -257,6 +257,7 @@ let currentSymbol = CONFIG.SYMBOL;
 
 let windowSize = 1000;
 let tickWindow = [];   // { digit, direction: "rise" | "fall" | "same" }
+let currentDigitPercentages = Array(10).fill(0); // read by autobot.js's strategy checks
 let lastQuote = null;
 
 let highStreak = 0;
@@ -558,6 +559,9 @@ socket.onmessage = (event) => {
 
     renderAnalysis();
 
+    // Auto Trading Engine (autobot.js) — checks Strategy A/B on every tick
+    if (typeof checkStrategySignals === "function") checkStrategySignals();
+
     // Instantly evaluate any tick-based digit contracts settling on this tick.
     // This must run AFTER renderAnalysis() — that function rebuilds the whole
     // digit grid's HTML from scratch every tick, which would otherwise erase
@@ -660,6 +664,7 @@ function renderAnalysis() {
 
     for (let i = 0; i < 10; i++) {
         const percent = ((digitCount[i] / total) * 100).toFixed(1);
+        currentDigitPercentages[i] = Number(percent);
         let cls = "digit-circle";
         if (digitCount[i] === highest) cls += " highest";
         if (digitCount[i] === lowest) cls += " lowest";

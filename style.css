@@ -303,7 +303,8 @@ input[type="number"],input[type="text"]{
 .quick-trade-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
 .quick-trade-row input{width:120px;}
 .quick-trade-buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.quick-btn{padding:16px;border:none;border-radius:12px;font-weight:800;font-size:14px;letter-spacing:.03em;color:white;}
+.quick-btn{padding:16px;border:none;border-radius:12px;font-weight:800;font-size:14px;letter-spacing:.03em;color:white;flex:1;}
+.quick-btn:disabled{opacity:.35;cursor:not-allowed;}
 .quick-rise{background:var(--green);}
 .quick-rise:hover{background:#16a34a;}
 .quick-fall{background:var(--red);}
