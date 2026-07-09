@@ -327,3 +327,18 @@ input[type="number"],input[type="text"]{
     .sidebar{display:none;}
     .live-digit{font-size:60px;}
 }
+
+.history-table{width:100%;border-collapse:collapse;font-size:13px;min-width:720px;}
+.history-table th{
+    text-align:left;padding:8px 10px;color:var(--muted);
+    font-size:11px;text-transform:uppercase;letter-spacing:.03em;
+    border-bottom:1px solid var(--border);white-space:nowrap;
+}
+.history-table td{
+    padding:8px 10px;border-bottom:1px solid var(--border);
+    white-space:nowrap;
+}
+.history-table td.history-reason{
+    white-space:normal;color:var(--muted);font-size:12px;min-width:220px;
+}
+.history-table tbody tr:hover{background:rgba(255,255,255,.03);}

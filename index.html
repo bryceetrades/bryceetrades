@@ -369,6 +369,51 @@
                 <h2>Analysis Tools</h2>
                 <p class="empty-msg">Deeper analytics (multi-symbol comparison, custom indicators, saved chart layouts) land here as they're built. The live Digit Analysis and Live Stats panels are available now in the Bot Builder tab, right next to trade setup, so you can watch and trade in one place.</p>
             </div>
+
+            <div class="card">
+                <div class="card-header-row">
+                    <h2>AI Trade History</h2>
+                    <div style="display:flex;gap:8px;">
+                        <button id="exportHistoryBtn" class="sell-btn" style="background:var(--cyan);">Export CSV</button>
+                        <button id="clearHistoryBtn" class="sell-btn">Clear</button>
+                    </div>
+                </div>
+
+                <p class="empty-msg">Every Auto Trading Engine decision — executed trades and skipped signals — with the AI's reasoning.</p>
+
+                <div class="duration-row" style="margin:14px 0;">
+                    <div style="flex:1">
+                        <label class="field-label">Strategy</label>
+                        <select id="historyFilterStrategy">
+                            <option value="all">All</option>
+                            <option value="A">Strategy A</option>
+                            <option value="B">Strategy B</option>
+                        </select>
+                    </div>
+                    <div style="flex:1">
+                        <label class="field-label">Result</label>
+                        <select id="historyFilterResult">
+                            <option value="all">All</option>
+                            <option value="win">Win</option>
+                            <option value="loss">Loss</option>
+                            <option value="skipped">Skipped</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="overflow-x:auto;">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th><th>Strategy</th><th>Confidence</th><th>Digit</th>
+                                <th>Contract</th><th>Stake</th><th>P/L</th><th>Result</th><th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody id="aiHistoryTableBody"></tbody>
+                    </table>
+                    <p id="aiHistoryEmpty" class="empty-msg">No history yet — run the Auto Trading Engine to build one.</p>
+                </div>
+            </div>
         </section>
 
         <!-- STRATEGY TESTER -->
@@ -412,4 +457,5 @@
 <script src="aisignal.js"></script>
 <script src="riskmanager.js"></script>
 <script src="autobot.js"></script>
+<script src="tradehistorylog.js"></script>
 </html>

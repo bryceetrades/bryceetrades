@@ -99,11 +99,16 @@ function checkStrategySignals() {
     renderConfidence(score, reasons);
 
     const threshold = Number(document.getElementById("aiConfidenceThreshold").value) || 80;
+    const entryDigit = lastTwo[lastTwo.length - 1];
 
     if (score < threshold) {
-        autoEngineLog(
-            `Skipped — Strategy ${strategyName} pattern matched but confidence ${score}% < threshold ${threshold}% (${reasons.join(", ")})`
-        );
+        const reasonText = `Confidence ${score}% < threshold ${threshold}% (${reasons.join(", ")})`;
+        autoEngineLog(`Skipped — Strategy ${strategyName} pattern matched but ${reasonText}`);
+        recordHistoryEntry({
+            strategy: strategyName, confidence: score, entryDigit,
+            contractType, stake: null, profit: null,
+            result: "skipped", reason: reasonText
+        });
         return;
     }
 
@@ -115,20 +120,26 @@ function checkStrategySignals() {
         } else {
             autoEngineLog(`Skipped — ${gate.reason}`);
         }
+        recordHistoryEntry({
+            strategy: strategyName, confidence: score, entryDigit,
+            contractType, stake: null, profit: null,
+            result: "skipped", reason: gate.reason
+        });
         return;
     }
 
     autoEngineLog(`Strategy ${strategyName} signal — confidence ${score}% ≥ threshold ${threshold}%`);
-    fireAutoTrade(strategyName, contractType, barrier, lastTwo);
+    fireAutoTrade(strategyName, contractType, barrier, lastTwo, score);
 }
 
-async function fireAutoTrade(strategyName, contractType, barrier, digitsSeen) {
+async function fireAutoTrade(strategyName, contractType, barrier, digitsSeen, confidenceScore) {
 
     autoEngineTradeInFlight = true;
     const tradeStartTime = Date.now();
 
     const stake = Number(document.getElementById("stake").value) || 1;
     const reason = `digits [${digitsSeen.join(", ")}] all in range, both under 10% frequency`;
+    const entryDigit = digitsSeen[digitsSeen.length - 1];
     autoEngineLog(`Entering — ${reason}`);
 
     try {
@@ -166,6 +177,13 @@ async function fireAutoTrade(strategyName, contractType, barrier, digitsSeen) {
             recordAutoTradeResult(result.profit, Date.now() - tradeStartTime);
             const outcome = result.profit >= 0 ? "WIN +" : "LOSS ";
             autoEngineLog(`Result: ${outcome}${result.profit.toFixed(2)} USD`);
+
+            recordHistoryEntry({
+                strategy: strategyName, confidence: confidenceScore, entryDigit,
+                contractType, stake, profit: result.profit,
+                result: result.profit >= 0 ? "win" : "loss",
+                reason
+            });
 
             const stopReason = checkPostTradeStops();
             if (stopReason) {
