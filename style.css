@@ -342,3 +342,15 @@ input[type="number"],input[type="text"]{
     white-space:normal;color:var(--muted);font-size:12px;min-width:220px;
 }
 .history-table tbody tr:hover{background:rgba(255,255,255,.03);}
+
+.bot-subtab-bar{display:flex;gap:8px;margin-bottom:14px;}
+.bot-subtab-btn{
+    flex:1;background:var(--panel);color:var(--muted);
+    border:1px solid var(--border);padding:10px 12px;border-radius:10px;
+    font-weight:700;font-size:13px;transition:all .15s;
+}
+.bot-subtab-btn.active{background:rgba(251,191,36,.1);color:var(--gold);border-color:var(--gold);}
+.bot-subtab-btn:hover:not(.active){color:var(--text);border-color:var(--cyan);}
+
+.bot-subpanel{display:none;}
+.bot-subpanel.active{display:block;}

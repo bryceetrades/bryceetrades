@@ -28,6 +28,22 @@ document.querySelectorAll(".tab-btn, .side-icon").forEach(btn => {
     btn.addEventListener("click", () => activateTab(btn.dataset.tab));
 });
 
+function activateBotSubpanel(panelId) {
+    document.querySelectorAll(".bot-subpanel").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".bot-subtab-btn").forEach(b => b.classList.toggle("active", b.dataset.botpanel === panelId));
+
+    const panel = document.getElementById(`botpanel-${panelId}`);
+    if (panel) panel.classList.add("active");
+
+    // The Auto Trading Engine has its own Start/Pause/Resume/Stop buttons
+    // inline in its card — no need to also show RUN BOT in the fixed bar.
+    document.getElementById("runBotBtn").style.display = (panelId === "repeat") ? "block" : "none";
+}
+
+document.querySelectorAll(".bot-subtab-btn").forEach(btn => {
+    btn.addEventListener("click", () => activateBotSubpanel(btn.dataset.botpanel));
+});
+
 document.querySelectorAll(".accordion-head").forEach(head => {
     head.addEventListener("click", () => {
         head.closest(".accordion").classList.toggle("open");

@@ -121,102 +121,6 @@
             <div class="two-col">
 
                 <div>
-                    <div class="card" id="botControlCard">
-                        <div class="card-header-row">
-                            <h2>Bot Control</h2>
-                            <span id="botStatus">⚪ Stopped</span>
-                        </div>
-                        <div class="stats" style="margin-bottom:0;grid-template-columns:1fr 1fr;">
-                            <div class="stat-card"><h4>Session P&L</h4><h2 id="botSessionPnl">+0.00 USD</h2></div>
-                            <div class="stat-card"><h4>Trades This Run</h4><h2 id="botTradesCount">0</h2></div>
-                        </div>
-
-                        <h4 style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px;">Live Trades</h4>
-                        <div id="botTradeFeed"><p class="empty-msg">No trades yet this run</p></div>
-                    </div>
-
-                    <div class="card" id="autoEngineCard">
-                        <div class="card-header-row">
-                            <h2>Auto Trading Engine</h2>
-                            <span id="autoEngineStatus">⚪ Stopped</span>
-                        </div>
-
-                        <p class="empty-msg">
-                            Pattern-based strategy — bets that a rare recent digit is "due."
-                            Digit outcomes here are close to independent each tick, so treat this
-                            as an experiment, not a guaranteed edge.
-                        </p>
-
-                        <label class="field-label">Strategy</label>
-                        <select id="autoStrategySelect">
-                            <option value="A">Strategy A — Under 6 (digits 6-9, both &lt;10%)</option>
-                            <option value="B">Strategy B — Over 3 (digits 0-3, both &lt;10%)</option>
-                            <option value="both">Both strategies</option>
-                        </select>
-
-                        <label class="field-label">AI Confidence Threshold (0-100)</label>
-                        <input type="number" id="aiConfidenceThreshold" min="0" max="100" value="80">
-
-                        <div class="split-stat" style="margin-top:14px;">
-                            <div class="split-label"><span>AI Confidence</span><span id="aiConfidenceScore">—</span></div>
-                            <div class="split-bar"><div id="aiConfidenceBar" class="split-fill" style="width:0%;"></div></div>
-                        </div>
-                        <p id="aiConfidenceReason" class="empty-msg">No signal evaluated yet.</p>
-
-                        <div class="duration-row" style="margin-top:14px;">
-                            <button id="autoStartBtn" class="quick-btn quick-rise">▶ Start</button>
-                            <button id="autoPauseBtn" class="quick-btn" style="background:var(--gold);color:#1c1207;">⏸ Pause</button>
-                        </div>
-                        <div class="duration-row" style="margin-top:10px;">
-                            <button id="autoResumeBtn" class="quick-btn" style="background:var(--cyan);color:#04202e;">⏵ Resume</button>
-                            <button id="autoStopBtn" class="quick-btn quick-fall">⏹ Stop</button>
-                        </div>
-
-                        <h4 style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px;">Signal Feed</h4>
-                        <div id="autoEngineFeed"><p class="empty-msg">No signals yet</p></div>
-                    </div>
-
-                    <div class="card" id="riskManagementCard">
-                        <h2>Risk Management</h2>
-                        <p class="empty-msg">Applies only to the Auto Trading Engine above. Leave any field at 0 for no limit.</p>
-
-                        <div class="duration-row">
-                            <div style="flex:1">
-                                <label class="field-label">Daily Profit Target (USD)</label>
-                                <input type="number" id="riskDailyProfitTarget" value="20" min="0">
-                            </div>
-                            <div style="flex:1">
-                                <label class="field-label">Daily Loss Limit (USD)</label>
-                                <input type="number" id="riskDailyLossLimit" value="20" min="0">
-                            </div>
-                        </div>
-
-                        <div class="duration-row">
-                            <div style="flex:1">
-                                <label class="field-label">Max Consecutive Losses</label>
-                                <input type="number" id="riskMaxConsecutiveLosses" value="5" min="0">
-                            </div>
-                            <div style="flex:1">
-                                <label class="field-label">Cooldown After Loss (seconds)</label>
-                                <input type="number" id="riskCooldownAfterLoss" value="30" min="0">
-                            </div>
-                        </div>
-
-                        <div class="duration-row">
-                            <div style="flex:1">
-                                <label class="field-label">Max Trades Per Hour</label>
-                                <input type="number" id="riskMaxTradesPerHour" value="30" min="0">
-                            </div>
-                            <div style="flex:1">
-                                <label class="field-label">Max Stake (USD)</label>
-                                <input type="number" id="riskMaxStake" value="5" min="0">
-                            </div>
-                        </div>
-
-                        <label class="field-label">Minimum Balance Before Stopping (USD)</label>
-                        <input type="number" id="riskMinBalance" value="0" min="0">
-                    </div>
-
                     <div class="accordion open" data-accordion>
                         <button class="accordion-head">PURCHASE CONDITIONS <span class="chevron">▾</span></button>
                         <div class="accordion-body">
@@ -258,57 +162,168 @@
                     </div>
 
                     <div class="accordion" data-accordion>
-                        <button class="accordion-head">RISK MANAGEMENT <span class="chevron">▾</span></button>
-                        <div class="accordion-body">
-                            <p class="empty-msg">Applies only when the bot is running — leave a field blank/0 for no limit.</p>
-                            <div class="duration-row">
-                                <div style="flex:1">
-                                    <label class="field-label">Stop Loss (USD)</label>
-                                    <input type="number" id="botStopLoss" value="20" min="0">
-                                </div>
-                                <div style="flex:1">
-                                    <label class="field-label">Take Profit (USD)</label>
-                                    <input type="number" id="botTakeProfit" value="10" min="0">
-                                </div>
-                            </div>
-                            <label class="field-label">Max Trades (0 = unlimited)</label>
-                            <input type="number" id="botMaxTrades" value="20" min="0">
-                        </div>
-                    </div>
-
-                    <div class="accordion" data-accordion>
-                        <button class="accordion-head">MARTINGALE SETTINGS <span class="badge-soon">Coming soon</span> <span class="chevron">▾</span></button>
-                        <div class="accordion-body">
-                            <p class="empty-msg">Optional stake-scaling after a loss. Comes with a built-in warning — this strategy can drain an account fast.</p>
-                        </div>
-                    </div>
-
-                    <div class="accordion" data-accordion>
-                        <button class="accordion-head">TRADE FILTERS <span class="badge-soon">Coming soon</span> <span class="chevron">▾</span></button>
-                        <div class="accordion-body">
-                            <p class="empty-msg">Restrict trades by volatility, time of day, or spacing between trades.</p>
-                        </div>
-                    </div>
-
-                    <div class="accordion" data-accordion>
-                        <button class="accordion-head">ENTRY CONDITIONS <span class="badge-soon">Coming soon</span> <span class="chevron">▾</span></button>
-                        <div class="accordion-body">
-                            <p class="empty-msg">Rule-based auto-entry (e.g. streak detection) for the bot engine.</p>
-                        </div>
-                    </div>
-
-                    <div class="accordion" data-accordion>
-                        <button class="accordion-head">EXIT CONDITIONS <span class="badge-soon">Coming soon</span> <span class="chevron">▾</span></button>
-                        <div class="accordion-body">
-                            <p class="empty-msg">Auto-stop rules beyond stop loss / take profit.</p>
-                        </div>
-                    </div>
-
-                    <div class="accordion" data-accordion>
                         <button class="accordion-head">LOGS <span class="chevron">▾</span></button>
                         <div class="accordion-body">
                             <div id="logsPanel"></div>
                         </div>
+                    </div>
+
+                    <p class="empty-msg" style="margin:16px 0 8px;">Purchase Conditions and Logs above are shared. Pick which bot to configure below — only one shows at a time so they can't get mixed up.</p>
+
+                    <div class="bot-subtab-bar">
+                        <button class="bot-subtab-btn active" data-botpanel="repeat">Repeat Bot</button>
+                        <button class="bot-subtab-btn" data-botpanel="auto">Auto Trading Engine</button>
+                    </div>
+
+                    <div class="bot-subpanel active" id="botpanel-repeat">
+
+                        <div class="card" id="botControlCard">
+                            <div class="card-header-row">
+                                <h2>Bot Control</h2>
+                                <span id="botStatus">⚪ Stopped</span>
+                            </div>
+                            <div class="stats" style="margin-bottom:0;grid-template-columns:1fr 1fr;">
+                                <div class="stat-card"><h4>Session P&L</h4><h2 id="botSessionPnl">+0.00 USD</h2></div>
+                                <div class="stat-card"><h4>Trades This Run</h4><h2 id="botTradesCount">0</h2></div>
+                            </div>
+
+                            <h4 style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px;">Live Trades</h4>
+                            <div id="botTradeFeed"><p class="empty-msg">No trades yet this run</p></div>
+                        </div>
+
+                        <div class="accordion open" data-accordion>
+                            <button class="accordion-head">RISK MANAGEMENT — Repeat Bot <span class="chevron">▾</span></button>
+                            <div class="accordion-body">
+                                <p class="empty-msg">Applies only when the bot is running — leave a field blank/0 for no limit.</p>
+                                <div class="duration-row">
+                                    <div style="flex:1">
+                                        <label class="field-label">Stop Loss (USD)</label>
+                                        <input type="number" id="botStopLoss" value="20" min="0">
+                                    </div>
+                                    <div style="flex:1">
+                                        <label class="field-label">Take Profit (USD)</label>
+                                        <input type="number" id="botTakeProfit" value="10" min="0">
+                                    </div>
+                                </div>
+                                <label class="field-label">Max Trades (0 = unlimited)</label>
+                                <input type="number" id="botMaxTrades" value="20" min="0">
+                            </div>
+                        </div>
+
+                        <div class="accordion" data-accordion>
+                            <button class="accordion-head">MARTINGALE SETTINGS <span class="badge-soon">Coming soon</span> <span class="chevron">▾</span></button>
+                            <div class="accordion-body">
+                                <p class="empty-msg">Optional stake-scaling after a loss. Comes with a built-in warning — this strategy can drain an account fast.</p>
+                            </div>
+                        </div>
+
+                        <div class="accordion" data-accordion>
+                            <button class="accordion-head">TRADE FILTERS <span class="badge-soon">Coming soon</span> <span class="chevron">▾</span></button>
+                            <div class="accordion-body">
+                                <p class="empty-msg">Restrict trades by volatility, time of day, or spacing between trades.</p>
+                            </div>
+                        </div>
+
+                        <div class="accordion" data-accordion>
+                            <button class="accordion-head">ENTRY CONDITIONS <span class="badge-soon">Coming soon</span> <span class="chevron">▾</span></button>
+                            <div class="accordion-body">
+                                <p class="empty-msg">Rule-based auto-entry (e.g. streak detection) for the bot engine.</p>
+                            </div>
+                        </div>
+
+                        <div class="accordion" data-accordion>
+                            <button class="accordion-head">EXIT CONDITIONS <span class="badge-soon">Coming soon</span> <span class="chevron">▾</span></button>
+                            <div class="accordion-body">
+                                <p class="empty-msg">Auto-stop rules beyond stop loss / take profit.</p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="bot-subpanel" id="botpanel-auto">
+
+                        <div class="card" id="autoEngineCard">
+                            <div class="card-header-row">
+                                <h2>Auto Trading Engine</h2>
+                                <span id="autoEngineStatus">⚪ Stopped</span>
+                            </div>
+
+                            <p class="empty-msg">
+                                Pattern-based strategy — bets that a rare recent digit is "due."
+                                Digit outcomes here are close to independent each tick, so treat this
+                                as an experiment, not a guaranteed edge.
+                            </p>
+
+                            <label class="field-label">Strategy</label>
+                            <select id="autoStrategySelect">
+                                <option value="A">Strategy A — Under 6 (digits 6-9, both &lt;10%)</option>
+                                <option value="B">Strategy B — Over 3 (digits 0-3, both &lt;10%)</option>
+                                <option value="both">Both strategies</option>
+                            </select>
+
+                            <label class="field-label">AI Confidence Threshold (0-100)</label>
+                            <input type="number" id="aiConfidenceThreshold" min="0" max="100" value="80">
+
+                            <div class="split-stat" style="margin-top:14px;">
+                                <div class="split-label"><span>AI Confidence</span><span id="aiConfidenceScore">—</span></div>
+                                <div class="split-bar"><div id="aiConfidenceBar" class="split-fill" style="width:0%;"></div></div>
+                            </div>
+                            <p id="aiConfidenceReason" class="empty-msg">No signal evaluated yet.</p>
+
+                            <div class="duration-row" style="margin-top:14px;">
+                                <button id="autoStartBtn" class="quick-btn quick-rise">▶ Start</button>
+                                <button id="autoPauseBtn" class="quick-btn" style="background:var(--gold);color:#1c1207;">⏸ Pause</button>
+                            </div>
+                            <div class="duration-row" style="margin-top:10px;">
+                                <button id="autoResumeBtn" class="quick-btn" style="background:var(--cyan);color:#04202e;">⏵ Resume</button>
+                                <button id="autoStopBtn" class="quick-btn quick-fall">⏹ Stop</button>
+                            </div>
+
+                            <h4 style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin:16px 0 8px;">Signal Feed</h4>
+                            <div id="autoEngineFeed"><p class="empty-msg">No signals yet</p></div>
+                        </div>
+
+                        <div class="card" id="riskManagementCard">
+                            <h2>Risk Management — Auto Engine</h2>
+                            <p class="empty-msg">Applies only to the Auto Trading Engine above. Leave any field at 0 for no limit.</p>
+
+                            <div class="duration-row">
+                                <div style="flex:1">
+                                    <label class="field-label">Daily Profit Target (USD)</label>
+                                    <input type="number" id="riskDailyProfitTarget" value="20" min="0">
+                                </div>
+                                <div style="flex:1">
+                                    <label class="field-label">Daily Loss Limit (USD)</label>
+                                    <input type="number" id="riskDailyLossLimit" value="20" min="0">
+                                </div>
+                            </div>
+
+                            <div class="duration-row">
+                                <div style="flex:1">
+                                    <label class="field-label">Max Consecutive Losses</label>
+                                    <input type="number" id="riskMaxConsecutiveLosses" value="5" min="0">
+                                </div>
+                                <div style="flex:1">
+                                    <label class="field-label">Cooldown After Loss (seconds)</label>
+                                    <input type="number" id="riskCooldownAfterLoss" value="30" min="0">
+                                </div>
+                            </div>
+
+                            <div class="duration-row">
+                                <div style="flex:1">
+                                    <label class="field-label">Max Trades Per Hour</label>
+                                    <input type="number" id="riskMaxTradesPerHour" value="30" min="0">
+                                </div>
+                                <div style="flex:1">
+                                    <label class="field-label">Max Stake (USD)</label>
+                                    <input type="number" id="riskMaxStake" value="5" min="0">
+                                </div>
+                            </div>
+
+                            <label class="field-label">Minimum Balance Before Stopping (USD)</label>
+                            <input type="number" id="riskMinBalance" value="0" min="0">
+                        </div>
+
                     </div>
                 </div>
 
