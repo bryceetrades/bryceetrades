@@ -450,6 +450,79 @@
                     <a href="https://deriv.com/signup" target="_blank" rel="noopener" class="signup-link">Sign up here</a>.
                 </p>
             </div>
+
+            <div class="card">
+                <h2>Trading Preferences</h2>
+                <p class="empty-msg">Saved locally on this device. Saving here applies these values to the live Bot Builder controls immediately, and restores them automatically next time you open the site.</p>
+
+                <label class="field-label">Default Stake (USD)</label>
+                <input type="number" id="settingsStake" min="0.35" step="0.01" value="1">
+
+                <label class="field-label">Auto Engine Strategy</label>
+                <select id="settingsStrategy">
+                    <option value="A">Strategy A — Under 6</option>
+                    <option value="B">Strategy B — Over 3</option>
+                    <option value="both">Both strategies</option>
+                </select>
+
+                <label class="field-label">AI Confidence Threshold (0-100)</label>
+                <input type="number" id="settingsConfidenceThreshold" min="0" max="100" value="80">
+
+                <h4 style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin:18px 0 8px;">Auto Stop Conditions</h4>
+
+                <div class="duration-row">
+                    <div style="flex:1">
+                        <label class="field-label">Daily Profit Target (USD)</label>
+                        <input type="number" id="settingsDailyProfitTarget" value="20" min="0">
+                    </div>
+                    <div style="flex:1">
+                        <label class="field-label">Daily Loss Limit (USD)</label>
+                        <input type="number" id="settingsDailyLossLimit" value="20" min="0">
+                    </div>
+                </div>
+
+                <div class="duration-row">
+                    <div style="flex:1">
+                        <label class="field-label">Max Consecutive Losses</label>
+                        <input type="number" id="settingsMaxConsecutiveLosses" value="5" min="0">
+                    </div>
+                    <div style="flex:1">
+                        <label class="field-label">Cooldown After Loss (seconds)</label>
+                        <input type="number" id="settingsCooldownAfterLoss" value="30" min="0">
+                    </div>
+                </div>
+
+                <div class="duration-row">
+                    <div style="flex:1">
+                        <label class="field-label">Max Trades Per Hour</label>
+                        <input type="number" id="settingsMaxTradesPerHour" value="30" min="0">
+                    </div>
+                    <div style="flex:1">
+                        <label class="field-label">Max Stake (USD)</label>
+                        <input type="number" id="settingsMaxStake" value="5" min="0">
+                    </div>
+                </div>
+
+                <label class="field-label">Minimum Balance Before Stopping (USD)</label>
+                <input type="number" id="settingsMinBalance" value="0" min="0">
+
+                <h4 style="color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.04em;margin:18px 0 8px;">Alerts</h4>
+
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-size:14px;">Sound alerts</span>
+                    <input type="checkbox" id="settingsSoundAlerts" style="width:18px;height:18px;">
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;">
+                    <span style="font-size:14px;">Browser notifications</span>
+                    <input type="checkbox" id="settingsNotifications" style="width:18px;height:18px;">
+                </div>
+
+                <div class="duration-row" style="margin-top:18px;">
+                    <button id="saveSettingsBtn" class="quick-btn quick-rise">💾 Save Settings</button>
+                    <button id="resetSettingsBtn" class="quick-btn quick-fall">Reset to Defaults</button>
+                </div>
+                <p id="settingsSavedNote" class="empty-msg" style="margin-top:10px;"></p>
+            </div>
         </section>
 
     </main>
@@ -468,9 +541,11 @@
 <script src="config.js"></script>
 <script src="auth.js"></script>
 <script src="app.js"></script>
-<script src="trading.js"></script>
+<script src="manualtrader.js"></script>
+<script src="repeatbot.js"></script>
 <script src="aisignal.js"></script>
 <script src="riskmanager.js"></script>
 <script src="autobot.js"></script>
 <script src="tradehistorylog.js"></script>
+<script src="settingsmanager.js"></script>
 </html>
