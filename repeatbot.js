@@ -58,6 +58,9 @@ function updateBotStatusUI() {
 function stopBot(reason) {
     botRunning = false;
     logEvent(`Bot stopped${reason ? " — " + reason : ""}`);
+    if (typeof notify === "function") {
+        notify("Bot Stopped", `Repeat Bot stopped${reason ? " — " + reason : ""}`, "info");
+    }
     updateBotStatusUI();
 }
 
@@ -131,6 +134,7 @@ document.getElementById("runBotBtn").addEventListener("click", () => {
     botTradeLog.length = 0;
     renderBotTradeFeed();
     logEvent("Bot started");
+    if (typeof notify === "function") notify("Bot Started", "Repeat Bot is now running", "success");
     updateBotStatusUI();
     runBotLoop();
 });

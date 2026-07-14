@@ -294,7 +294,10 @@ function drawChart() {
 const PUBLIC_WS_URL = "wss://api.derivws.com/trading/v1/options/ws/public";
 const authedWsUrl = localStorage.getItem("deriv_ws_url");
 
-const socket = new WebSocket(authedWsUrl || PUBLIC_WS_URL);
+let socket; // reassigned by connectSocket() on reconnect — declared here, created below
+let reconnectAttempts = 0;
+let hasConnectedOnce = false;
+const MAX_RECONNECT_ATTEMPTS = 10;
 
 // --- Request/response layer --------------------------------------------
 // Two patterns:
@@ -545,10 +548,16 @@ function addToHistory(poc) {
 }
 // -------------------------------------------------------------------------
 
-socket.onopen = () => {
+function handleSocketOpen() {
 
     console.log("Connected to:", authedWsUrl ? "authenticated socket" : "public socket");
     logEvent(authedWsUrl ? "Connected to authenticated socket" : "Connected to public socket");
+
+    if (hasConnectedOnce && reconnectAttempts > 0 && typeof notify === "function") {
+        notify("Reconnected", "Connection to Deriv restored", "success");
+    }
+    hasConnectedOnce = true;
+    reconnectAttempts = 0;
 
     if (authedWsUrl) {
 
@@ -587,7 +596,7 @@ socket.onopen = () => {
     logEvent(`Subscribed to ticks for ${currentSymbol}`);
 };
 
-socket.onmessage = (event) => {
+function handleSocketMessage(event) {
 
     const data = JSON.parse(event.data);
 
@@ -830,12 +839,34 @@ function showTradeToast(stake, profit) {
     }, 2500);
 }
 
-socket.onerror = () => {
+function handleSocketError() {
     document.getElementById("status").textContent = "🔴 Connection Error";
     logEvent("Connection error");
-};
+}
 
-socket.onclose = () => {
+function handleSocketClose() {
     document.getElementById("status").textContent = "🟠 Disconnected";
     logEvent("Disconnected");
-};
+
+    if (hasConnectedOnce && typeof notify === "function") {
+        notify("API Disconnected", "Lost connection to Deriv — attempting to reconnect", "error");
+    }
+
+    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+        reconnectAttempts++;
+        logEvent(`Reconnecting in 3s (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
+        setTimeout(connectSocket, 3000);
+    } else {
+        logEvent("Max reconnect attempts reached — refresh the page to retry.");
+    }
+}
+
+function connectSocket() {
+    socket = new WebSocket(authedWsUrl || PUBLIC_WS_URL);
+    socket.onopen = handleSocketOpen;
+    socket.onmessage = handleSocketMessage;
+    socket.onerror = handleSocketError;
+    socket.onclose = handleSocketClose;
+}
+
+connectSocket();

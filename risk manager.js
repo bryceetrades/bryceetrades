@@ -47,16 +47,16 @@ function checkPostTradeStops() {
     const losses = getConsecutiveLosses();
 
     if (dailyProfitTarget && todayPnl >= dailyProfitTarget) {
-        return `Daily profit target reached (+${todayPnl.toFixed(2)} USD)`;
+        return { reason: `Daily profit target reached (+${todayPnl.toFixed(2)} USD)`, kind: "profit" };
     }
     if (dailyLossLimit && todayPnl <= -dailyLossLimit) {
-        return `Daily loss limit reached (${todayPnl.toFixed(2)} USD)`;
+        return { reason: `Daily loss limit reached (${todayPnl.toFixed(2)} USD)`, kind: "loss" };
     }
     if (maxConsecutiveLosses && losses >= maxConsecutiveLosses) {
-        return `Max consecutive losses reached (${losses})`;
+        return { reason: `Max consecutive losses reached (${losses})`, kind: "streak" };
     }
     if (minBalance && currentBalance !== null && currentBalance < minBalance) {
-        return `Balance ${currentBalance.toFixed(2)} USD below minimum ${minBalance.toFixed(2)} USD`;
+        return { reason: `Balance ${currentBalance.toFixed(2)} USD below minimum ${minBalance.toFixed(2)} USD`, kind: "balance" };
     }
     return null;
 }
@@ -72,9 +72,9 @@ function checkPreTradeGate() {
         return { allow: false, hardStop: true, reason: `Stake ${stake.toFixed(2)} exceeds max stake ${maxStake.toFixed(2)}` };
     }
 
-    const stopReason = checkPostTradeStops();
-    if (stopReason) {
-        return { allow: false, hardStop: true, reason: stopReason };
+    const stopCheck = checkPostTradeStops();
+    if (stopCheck) {
+        return { allow: false, hardStop: true, reason: stopCheck.reason, kind: stopCheck.kind };
     }
 
     const cooldownSeconds = Number(document.getElementById("riskCooldownAfterLoss").value) || 0;
@@ -99,10 +99,23 @@ function checkPreTradeGate() {
 }
 
 // Stops the engine and notifies the user — used for hard-stop breaches.
-function triggerRiskStop(reason) {
+function triggerRiskStop(reason, kind) {
     autoEngineState = AUTO_ENGINE_STATE.STOPPED;
     lastSignalKey = null;
     autoEngineLog(`🛑 Risk limit hit — engine stopped: ${reason}`);
     updateAutoEngineUI();
-    alert(`Auto Trading Engine stopped:\n${reason}`);
+
+    const titles = {
+        profit: "Profit Target Reached",
+        loss: "Loss Limit Reached",
+        streak: "Loss Streak Limit Reached",
+        balance: "Minimum Balance Reached"
+    };
+    const notifyType = kind === "profit" ? "success" : "error";
+
+    if (typeof notify === "function") {
+        notify(titles[kind] || "Bot Stopped", reason, notifyType);
+    } else {
+        alert(`Auto Trading Engine stopped:\n${reason}`);
+    }
 }

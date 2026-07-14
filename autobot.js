@@ -104,6 +104,7 @@ function checkStrategySignals() {
     if (score < threshold) {
         const reasonText = `Confidence ${score}% < threshold ${threshold}% (${reasons.join(", ")})`;
         autoEngineLog(`Skipped — Strategy ${strategyName} pattern matched but ${reasonText}`);
+        notify("Trade Skipped", `Strategy ${strategyName}: ${reasonText}`, "warning");
         recordHistoryEntry({
             strategy: strategyName, confidence: score, entryDigit,
             contractType, stake: null, profit: null,
@@ -116,9 +117,10 @@ function checkStrategySignals() {
 
     if (!gate.allow) {
         if (gate.hardStop) {
-            triggerRiskStop(gate.reason);
+            triggerRiskStop(gate.reason, gate.kind);
         } else {
             autoEngineLog(`Skipped — ${gate.reason}`);
+            notify("Trade Skipped", gate.reason, "warning");
         }
         recordHistoryEntry({
             strategy: strategyName, confidence: score, entryDigit,
@@ -141,6 +143,7 @@ async function fireAutoTrade(strategyName, contractType, barrier, digitsSeen, co
     const reason = `digits [${digitsSeen.join(", ")}] all in range, both under 10% frequency`;
     const entryDigit = digitsSeen[digitsSeen.length - 1];
     autoEngineLog(`Entering — ${reason}`);
+    notify("Trade Entered", `Strategy ${strategyName} — ${reason}`, "info");
 
     try {
         // Tick-based digit contract → eligible for the instant local flash too
@@ -185,9 +188,9 @@ async function fireAutoTrade(strategyName, contractType, barrier, digitsSeen, co
                 reason
             });
 
-            const stopReason = checkPostTradeStops();
-            if (stopReason) {
-                triggerRiskStop(stopReason);
+            const stopCheck = checkPostTradeStops();
+            if (stopCheck) {
+                triggerRiskStop(stopCheck.reason, stopCheck.kind);
             }
         }
 
@@ -212,6 +215,7 @@ document.getElementById("autoStartBtn").addEventListener("click", () => {
     autoEngineState = AUTO_ENGINE_STATE.RUNNING;
     lastSignalKey = null;
     autoEngineLog("Engine started");
+    notify("Bot Started", "Auto Trading Engine is now running", "success");
     updateAutoEngineUI();
 });
 
@@ -231,6 +235,7 @@ document.getElementById("autoStopBtn").addEventListener("click", () => {
     autoEngineState = AUTO_ENGINE_STATE.STOPPED;
     lastSignalKey = null;
     autoEngineLog("Engine stopped");
+    notify("Bot Stopped", "Auto Trading Engine stopped manually", "info");
     updateAutoEngineUI();
 });
 
