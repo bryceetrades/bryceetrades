@@ -203,14 +203,7 @@ async function fireAutoTrade(strategyName, contractType, barrier, digitsSeen, co
 }
 
 document.getElementById("autoStartBtn").addEventListener("click", () => {
-    if (!localStorage.getItem("deriv_ws_url")) {
-        alert("Please log in with Deriv first.");
-        return;
-    }
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-        alert("Not connected to Deriv.");
-        return;
-    }
+    if (!ensureConnected()) return;
 
     autoEngineState = AUTO_ENGINE_STATE.RUNNING;
     lastSignalKey = null;

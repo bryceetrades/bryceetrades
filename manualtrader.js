@@ -135,15 +135,7 @@ async function executeTrade() {
 
 async function placeTrade() {
 
-    if (!localStorage.getItem("deriv_ws_url")) {
-        alert("Please log in with Deriv first.");
-        return;
-    }
-
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-        alert("Not connected to Deriv.");
-        return;
-    }
+    if (!ensureConnected()) return;
 
     try {
         await executeTrade();
@@ -162,15 +154,7 @@ document.getElementById("buyBtn").addEventListener("click", placeTrade);
 
 async function quickTrade(direction) {
 
-    if (!localStorage.getItem("deriv_ws_url")) {
-        alert("Please log in with Deriv first.");
-        return;
-    }
-
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-        alert("Not connected to Deriv.");
-        return;
-    }
+    if (!ensureConnected()) return;
 
     const stake = Number(document.getElementById("quickStake").value);
 

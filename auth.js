@@ -58,51 +58,47 @@ document.getElementById("loginBtn").addEventListener("click", login);
     if (!params.has("code")) return;
 
     const code = params.get("code");
-
     const verifier = localStorage.getItem("pkce_verifier");
 
-    const response = await fetch("/api/token", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            code,
-            verifier
-        })
-    });
+    try {
 
-    const data = await response.json();
+        const response = await fetch("/api/token", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                code,
+                verifier
+            })
+        });
 
-    console.log("OAuth Response:", data);
+        if (!response.ok) {
+            throw new Error(`Token exchange failed with status ${response.status}`);
+        }
 
-    if (data.access_token) {
+        const data = await response.json();
 
-        localStorage.setItem(
-            "deriv_token",
-            data.access_token
-        );
+        console.log("OAuth Response:", data);
 
-        localStorage.setItem(
-            "deriv_account",
-            JSON.stringify(data.account)
-        );
+        if (data.access_token) {
 
-        localStorage.setItem(
-            "deriv_ws_url",
-            data.ws_url
-        );
+            localStorage.setItem("deriv_token", data.access_token);
+            localStorage.setItem("deriv_account", JSON.stringify(data.account));
+            localStorage.setItem("deriv_ws_url", data.ws_url);
+            localStorage.setItem("deriv_accounts", JSON.stringify(data.accounts || []));
 
-        window.history.replaceState({}, "", "/");
+            window.history.replaceState({}, "", "/");
+            location.reload();
 
-        location.reload();
+        } else {
+            console.log(data);
+            alert("❌ Login failed — Deriv didn't return an access token. Check the console for details.");
+        }
 
-    } else {
-
-        alert("❌ Login Failed");
-
-        console.log(data);
-
+    } catch (err) {
+        console.error("OAuth token exchange error:", err);
+        alert("❌ Login failed — couldn't reach the server. Check your connection and try again.");
     }
 
 })();

@@ -1,3 +1,20 @@
+// =====================================================================
+// APP.JS — connection core + shared UI chrome
+// =====================================================================
+// This file owns:
+//  - The WebSocket connection lifecycle (connectSocket, auto-reconnect)
+//  - The request/response layer other files build on: sendRequest()
+//    (one-shot, promise-based), sendSubscription() (ongoing pushes),
+//    and ensureConnected() (shared pre-flight check for every trade path)
+//  - Live tick handling, digit analysis, and the price chart
+//  - Cross-cutting UI chrome: tabs, sidebar, accordions, logs panel
+//
+// manualtrader.js, repeatbot.js, autobot.js, aisignal.js, riskmanager.js,
+// tradehistorylog.js, settingsmanager.js, and notifications.js all build
+// on top of what's declared here — this is the one file everything else
+// in the trading stack depends on.
+// =====================================================================
+
 // =====================
 // UI CHROME (tabs, sidebar, accordions, logs, logout)
 // =====================
@@ -309,6 +326,10 @@ const activeSubscriptions = {}; // req_id -> onUpdate(data)        (ongoing)
 
 function sendRequest(payload) {
     return new Promise((resolve, reject) => {
+        if (socket.readyState !== WebSocket.OPEN) {
+            reject(new Error("Not connected to Deriv — try again once reconnected."));
+            return;
+        }
         const req_id = reqCounter++;
         pendingRequests[req_id] = { resolve, reject };
         socket.send(JSON.stringify({ ...payload, req_id }));
@@ -443,6 +464,21 @@ function waitForSettlement(contractId) {
     return new Promise((resolve) => {
         settlementWaiters[contractId] = resolve;
     });
+}
+
+// Shared pre-flight check used by every trade entry point (manual trade,
+// Quick Trade, Repeat Bot, Auto Trading Engine) — previously this exact
+// two-part check was duplicated in four separate files.
+function ensureConnected() {
+    if (!localStorage.getItem("deriv_ws_url")) {
+        alert("Please log in with Deriv first.");
+        return false;
+    }
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+        alert("Not connected to Deriv.");
+        return false;
+    }
+    return true;
 }
 
 function subscribeToContract(contract_id) {
@@ -847,6 +883,14 @@ function handleSocketError() {
 function handleSocketClose() {
     document.getElementById("status").textContent = "🟠 Disconnected";
     logEvent("Disconnected");
+
+    // Any request still awaiting a response will never get one on this
+    // dead socket — reject them so callers (trades, bot loops) can react
+    // instead of hanging indefinitely.
+    Object.keys(pendingRequests).forEach(id => {
+        pendingRequests[id].reject(new Error("Connection lost before a response arrived."));
+        delete pendingRequests[id];
+    });
 
     if (hasConnectedOnce && typeof notify === "function") {
         notify("API Disconnected", "Lost connection to Deriv — attempting to reconnect", "error");

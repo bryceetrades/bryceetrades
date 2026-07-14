@@ -118,15 +118,7 @@ document.getElementById("runBotBtn").addEventListener("click", () => {
         return;
     }
 
-    if (!localStorage.getItem("deriv_ws_url")) {
-        alert("Please log in with Deriv first.");
-        return;
-    }
-
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-        alert("Not connected to Deriv.");
-        return;
-    }
+    if (!ensureConnected()) return;
 
     botRunning = true;
     botSessionPnl = 0;
