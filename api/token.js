@@ -5,7 +5,7 @@ export default async function handler(req, res) {
 
     const { code, verifier } = req.body;
     const CLIENT_ID = "33zqFdSUnH9jY0bjdm8Vn";
-    const REDIRECT_URI = "https://bryceetrades-kimsmercy496-2389s-projects.vercel.app";
+    const REDIRECT_URI = "https://bryceetrades.site";
 
     // 1. Exchange OAuth code for an access token
     const tokenResponse = await fetch(

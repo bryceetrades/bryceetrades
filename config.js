@@ -1,6 +1,6 @@
 const CONFIG = {
     CLIENT_ID: "33zqFdSUnH9jY0bjdm8Vn",
-    REDIRECT_URI: "https://bryceetrades-kimsmercy496-2389s-projects.vercel.app",
+    REDIRECT_URI: "https://bryceetrades.site",
 
     // Default market shown on load
     SYMBOL: "R_100",
