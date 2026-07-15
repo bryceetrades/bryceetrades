@@ -27,6 +27,12 @@ function logEvent(msg) {
     const line = document.createElement("div");
     line.textContent = `[${time}] ${msg}`;
     panel.prepend(line);
+
+    // This fires on nearly every trade/connection event — cap it so a long
+    // continuous session doesn't accumulate DOM nodes without bound.
+    while (panel.children.length > 100) {
+        panel.removeChild(panel.lastChild);
+    }
 }
 
 function activateTab(tabId) {
@@ -276,8 +282,15 @@ function drawChart() {
     const dpr = window.devicePixelRatio || 1;
     const width = canvas.clientWidth;
     const height = canvas.clientHeight || 140;
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
+
+    // Resizing a canvas's backing bitmap is expensive — only do it when the
+    // displayed size has actually changed, not on every single tick.
+    const targetWidth = Math.round(width * dpr);
+    const targetHeight = Math.round(height * dpr);
+    if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+    }
 
     const ctx = canvas.getContext("2d");
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -482,7 +495,7 @@ function ensureConnected() {
 }
 
 function subscribeToContract(contract_id) {
-    sendSubscription(
+    const reqId = sendSubscription(
         { proposal_open_contract: 1, contract_id },
         (data) => {
             if (data.error) {
@@ -516,6 +529,11 @@ function subscribeToContract(contract_id) {
                     settlementWaiters[contract_id]({ profit });
                     delete settlementWaiters[contract_id];
                 }
+
+                // Stop tracking this subscription now that the contract has
+                // settled — otherwise activeSubscriptions grows by one entry
+                // per trade, forever, over a long-running bot session.
+                delete activeSubscriptions[reqId];
             } else {
                 openPositions[contract_id] = poc;
             }
@@ -891,6 +909,12 @@ function handleSocketClose() {
         pendingRequests[id].reject(new Error("Connection lost before a response arrived."));
         delete pendingRequests[id];
     });
+
+    // A new connection means every req_id starts fresh — old subscription
+    // entries can never be matched again and would otherwise leak forever
+    // across reconnects. handleSocketOpen() re-establishes whatever's
+    // still needed (balance, open positions, ticks) on the new socket.
+    Object.keys(activeSubscriptions).forEach(id => delete activeSubscriptions[id]);
 
     if (hasConnectedOnce && typeof notify === "function") {
         notify("API Disconnected", "Lost connection to Deriv — attempting to reconnect", "error");

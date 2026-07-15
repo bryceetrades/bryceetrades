@@ -82,6 +82,7 @@ async function runBotLoop() {
         status: "pending"
     };
     botTradeLog.push(feedEntry);
+    if (botTradeLog.length > 100) botTradeLog.shift(); // feed only ever shows the last 8; cap growth
     renderBotTradeFeed();
 
     try {
