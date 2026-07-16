@@ -35,19 +35,46 @@ async function loadDerivStatement() {
     }
 }
 
+// Nets each contract's buy (negative stake) and sell (payout — 0 if
+// lost, positive if won) legs together via contract_id. The raw sell
+// amount alone is NOT the profit/loss — it's just the payout received,
+// which is 0 on every loss. This is why losses were showing as +0.00.
+function computeContractResults(transactions) {
+    const byContract = {};
+
+    transactions.forEach(t => {
+        if (!t.contract_id) return; // skip non-contract transactions (deposits, etc.)
+
+        if (!byContract[t.contract_id]) {
+            byContract[t.contract_id] = { amount: 0, sellTime: null, hasSell: false };
+        }
+
+        byContract[t.contract_id].amount += Number(t.amount || 0);
+
+        if (t.action_type === "sell") {
+            byContract[t.contract_id].sellTime = t.transaction_time;
+            byContract[t.contract_id].hasSell = true;
+        }
+    });
+
+    // Only count contracts that have actually settled (have a sell leg) —
+    // still-open positions won't have one yet.
+    return Object.entries(byContract)
+        .filter(([, c]) => c.hasSell)
+        .map(([contract_id, c]) => ({
+            contract_id,
+            profit: c.amount,
+            time: c.sellTime
+        }));
+}
+
 function renderDashboardFromStatement(transactions) {
-    const todayTx = transactions.filter(t => isToday(t.transaction_time));
+    const results = computeContractResults(transactions);
+    const todayResults = results.filter(r => isToday(r.time));
 
-    // Net P&L for today = sum of every transaction's amount. Buys are
-    // negative (stake paid out), sells/payouts are positive (money back)
-    // — summing nets out to the correct profit/loss automatically.
-    const todayPnl = todayTx.reduce((sum, t) => sum + Number(t.amount || 0), 0);
-
-    // Treat anything that isn't a "buy" as a settlement (sell/payout) for
-    // win-rate purposes — a settled contract's amount is its payout.
-    const settlements = todayTx.filter(t => t.action_type !== "buy");
-    const wins = settlements.filter(t => Number(t.amount) > 0).length;
-    const winRate = settlements.length ? ((wins / settlements.length) * 100).toFixed(1) : "0.0";
+    const todayPnl = todayResults.reduce((sum, r) => sum + r.profit, 0);
+    const wins = todayResults.filter(r => r.profit > 0).length;
+    const winRate = todayResults.length ? ((wins / todayResults.length) * 100).toFixed(1) : "0.0";
 
     const pnlEl = document.getElementById("pnlToday");
     if (pnlEl) {
@@ -59,29 +86,28 @@ function renderDashboardFromStatement(transactions) {
     if (winRateEl) winRateEl.textContent = winRate + "%";
 
     const tradesTodayEl = document.getElementById("tradesToday");
-    if (tradesTodayEl) tradesTodayEl.textContent = settlements.length;
+    if (tradesTodayEl) tradesTodayEl.textContent = todayResults.length;
 
-    renderDerivTradeList(transactions.slice(0, 30));
+    renderDerivTradeList(results);
 }
 
-function renderDerivTradeList(transactions) {
+function renderDerivTradeList(results) {
     const container = document.getElementById("tradeHistory");
     if (!container) return;
 
-    const settlements = transactions.filter(t => t.action_type !== "buy");
-
-    if (settlements.length === 0) {
+    if (results.length === 0) {
         container.innerHTML = `<p class="empty-msg">No trades yet</p>`;
         return;
     }
 
-    container.innerHTML = settlements.map(t => {
-        const amount = Number(t.amount || 0);
-        const cls = amount >= 0 ? "profit-positive" : "profit-negative";
-        const time = new Date(t.transaction_time * 1000).toLocaleString();
+    const sorted = [...results].sort((a, b) => b.time - a.time).slice(0, 30);
+
+    container.innerHTML = sorted.map(r => {
+        const cls = r.profit >= 0 ? "profit-positive" : "profit-negative";
+        const time = new Date(r.time * 1000).toLocaleString();
         return `<div class="history-row">
             <span>${time}</span>
-            <span class="${cls}">${amount >= 0 ? "+" : ""}${amount.toFixed(2)} USD</span>
+            <span class="${cls}">${r.profit >= 0 ? "+" : ""}${r.profit.toFixed(2)} USD</span>
         </div>`;
     }).join("");
 }
