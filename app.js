@@ -77,6 +77,7 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
     localStorage.removeItem("deriv_token");
     localStorage.removeItem("deriv_account");
     localStorage.removeItem("deriv_ws_url");
+    localStorage.removeItem("deriv_accounts");
     location.reload();
 });
 
@@ -643,6 +644,8 @@ function handleSocketOpen() {
                 logEvent(`Loaded ${contracts.length} open position(s) from portfolio`);
             })
             .catch((err) => console.error("Portfolio load failed:", err));
+
+        if (typeof startDerivHistoryPolling === "function") startDerivHistoryPolling();
     }
 
     safeSend({ ticks: currentSymbol, subscribe: 1 });
