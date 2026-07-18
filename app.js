@@ -20,6 +20,15 @@
 // =====================
 // Pure UI wiring — doesn't touch the socket/trading logic below.
 
+function hideLoadingScreen() {
+    const screen = document.getElementById("loadingScreen");
+    if (screen) screen.classList.add("hide");
+}
+
+// Safety net: don't leave someone staring at the loading screen forever
+// if the connection is slow or fails outright.
+setTimeout(hideLoadingScreen, 6000);
+
 function logEvent(msg) {
     const panel = document.getElementById("logsPanel");
     if (!panel) return;
@@ -607,6 +616,8 @@ function handleSocketOpen() {
 
     console.log("Connected to:", authedWsUrl ? "authenticated socket" : "public socket");
     logEvent(authedWsUrl ? "Connected to authenticated socket" : "Connected to public socket");
+
+    hideLoadingScreen();
 
     if (hasConnectedOnce && reconnectAttempts > 0 && typeof notify === "function") {
         notify("Reconnected", "Connection to Deriv restored", "success");

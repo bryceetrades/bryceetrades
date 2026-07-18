@@ -51,7 +51,9 @@ function updateBotStatusUI() {
 
     countEl.textContent = botTradesCount;
 
-    runBtn.textContent = botRunning ? "⏹ STOP BOT" : "▶ RUN BOT";
+    runBtn.innerHTML = botRunning
+        ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;"><rect x="5" y="5" width="14" height="14" rx="2"/></svg> STOP BOT'
+        : '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;"><polygon points="6,3 20,12 6,21"/></svg> RUN BOT';
     runBtn.classList.toggle("running", botRunning);
 }
 
