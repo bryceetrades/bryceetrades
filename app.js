@@ -164,6 +164,51 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
     realBtn.addEventListener("click", () => switchAccount("real"));
 })();
 
+// --- Reset Demo Balance ---------------------------------------------------
+document.getElementById("resetDemoBtn").addEventListener("click", () => {
+    const note = document.getElementById("resetDemoNote");
+    const accounts = JSON.parse(localStorage.getItem("deriv_accounts") || "[]");
+    const accessToken = localStorage.getItem("deriv_token");
+    const demoAccount = accounts.find(a => a.account_type === "demo");
+
+    if (!demoAccount) {
+        note.textContent = "No demo account found on this login.";
+        return;
+    }
+    if (!accessToken) {
+        note.textContent = "Please log in first.";
+        return;
+    }
+    if (!confirm("Reset your demo balance back to the default? This can't be undone.")) {
+        return;
+    }
+
+    note.textContent = "Resetting...";
+
+    fetch("/api/reset-demo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ access_token: accessToken, account_id: demoAccount.account_id })
+    })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                note.textContent = "Reset failed — see console.";
+                console.error(data);
+                return;
+            }
+            note.textContent = "✅ Demo balance reset.";
+            logEvent("Demo balance reset");
+            // Balance display updates automatically via the live subscription,
+            // but nudge it in case this account isn't the currently active one.
+            if (typeof loadDerivStatement === "function") loadDerivStatement();
+        })
+        .catch(err => {
+            note.textContent = "Reset failed — see console.";
+            console.error(err);
+        });
+});
+
 // --- Daily P&L / win rate / trade count (persists per calendar day) ------
 function todayStatsKey() {
     return "stats:" + new Date().toISOString().slice(0, 10);
@@ -915,6 +960,18 @@ function handleSocketError() {
 function handleSocketClose() {
     document.getElementById("status").textContent = "🟠 Disconnected";
     logEvent("Disconnected");
+
+    // The button was only ever set once on the first successful login and
+    // never reset — it kept showing "Logged In" even while fully
+    // disconnected. Auto-reconnect will silently restore the real session,
+    // so this shows "Reconnecting" rather than "Login with Deriv" (no need
+    // to click anything — clicking it would trigger a needless fresh OAuth
+    // flow when the existing token is still perfectly valid).
+    const loginBtn = document.getElementById("loginBtn");
+    if (authedWsUrl) {
+        loginBtn.textContent = "🔄 Reconnecting...";
+        loginBtn.disabled = true;
+    }
 
     // Any request still awaiting a response will never get one on this
     // dead socket — reject them so callers (trades, bot loops) can react

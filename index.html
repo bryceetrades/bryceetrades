@@ -485,7 +485,17 @@
             <div class="card">
                 <h2>Account</h2>
                 <p id="settingsAccountInfo" class="empty-msg">Not logged in</p>
-                <button id="logoutBtn" class="danger-btn">Log Out</button>
+
+                <div class="duration-row" style="margin-top:12px;">
+                    <a href="https://app.deriv.com/cashier/deposit" target="_blank" rel="noopener" class="quick-btn quick-rise" style="text-decoration:none;text-align:center;display:flex;align-items:center;justify-content:center;">Deposit</a>
+                    <a href="https://app.deriv.com/cashier/transfer" target="_blank" rel="noopener" class="quick-btn" style="background:var(--cyan);color:#fff;text-decoration:none;text-align:center;display:flex;align-items:center;justify-content:center;">Transfer</a>
+                </div>
+                <p class="empty-msg" style="margin-top:8px;">Opens Deriv's own cashier in a new tab — finish there, then just switch back here.</p>
+
+                <button id="resetDemoBtn" class="quick-btn" style="width:100%;margin-top:14px;background:var(--gold);color:#fff;">Reset Demo Balance</button>
+                <p id="resetDemoNote" class="empty-msg" style="margin-top:8px;"></p>
+
+                <button id="logoutBtn" class="danger-btn" style="width:100%;margin-top:14px;">Log Out</button>
                 <p class="empty-msg" style="margin-top:14px;">
                     Don't have a Deriv account yet?
                     <a href="https://deriv.com/signup" target="_blank" rel="noopener" class="signup-link">Sign up here</a>.
