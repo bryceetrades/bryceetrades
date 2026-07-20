@@ -378,6 +378,7 @@ function drawChart() {
 
 const PUBLIC_WS_URL = "wss://api.derivws.com/trading/v1/options/ws/public";
 const authedWsUrl = localStorage.getItem("deriv_ws_url");
+let isAuthedConnection = false; // reflects the CURRENT socket, set fresh in connectSocket()
 
 let socket; // reassigned by connectSocket() on reconnect — declared here, created below
 let reconnectAttempts = 0;
@@ -659,8 +660,8 @@ function addToHistory(poc) {
 
 function handleSocketOpen() {
 
-    console.log("Connected to:", authedWsUrl ? "authenticated socket" : "public socket");
-    logEvent(authedWsUrl ? "Connected to authenticated socket" : "Connected to public socket");
+    console.log("Connected to:", isAuthedConnection ? "authenticated socket" : "public socket");
+    logEvent(isAuthedConnection ? "Connected to authenticated socket" : "Connected to public socket");
 
     hideLoadingScreen();
 
@@ -670,7 +671,7 @@ function handleSocketOpen() {
     hasConnectedOnce = true;
     reconnectAttempts = 0;
 
-    if (authedWsUrl) {
+    if (isAuthedConnection) {
 
         const account = JSON.parse(localStorage.getItem("deriv_account") || "null");
 
@@ -702,6 +703,16 @@ function handleSocketOpen() {
             .catch((err) => console.error("Portfolio load failed:", err));
 
         if (typeof startDerivHistoryPolling === "function") startDerivHistoryPolling();
+
+    } else if (authedWsUrl) {
+        // We have a login on this browser, but this particular connection
+        // attempt couldn't get a fresh authenticated session (OTP refresh
+        // failed) and fell back to the public, ticks-only socket. Don't
+        // leave the button stuck on "Reconnecting" forever with no way out.
+        const loginBtn = document.getElementById("loginBtn");
+        loginBtn.textContent = "⚠️ Reconnect failed — refresh page";
+        loginBtn.disabled = false;
+        logEvent("Could not restore authenticated session — refresh the page to log in again.");
     }
 
     safeSend({ ticks: currentSymbol, subscribe: 1 });
@@ -1000,8 +1011,50 @@ function handleSocketClose() {
     }
 }
 
-function connectSocket() {
-    socket = new WebSocket(authedWsUrl || PUBLIC_WS_URL);
+async function connectSocket() {
+    let wsUrl = PUBLIC_WS_URL;
+
+    if (authedWsUrl) {
+        if (!hasConnectedOnce) {
+            // First connection ever this page load — the URL from login is
+            // guaranteed fresh, use it directly.
+            wsUrl = authedWsUrl;
+        } else {
+            // Reconnecting: the original OTP URL is one-time-use and has
+            // already been consumed (or expired) — reusing it here was the
+            // actual bug, causing every reconnect attempt to fail forever
+            // against the same dead URL. Fetch a brand new one instead.
+            try {
+                const account = JSON.parse(localStorage.getItem("deriv_account") || "null");
+                const accessToken = localStorage.getItem("deriv_token");
+
+                if (account && accessToken) {
+                    const resp = await fetch("/api/otp", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ access_token: accessToken, account_id: account.account_id })
+                    });
+                    const data = await resp.json();
+
+                    if (data.ws_url) {
+                        wsUrl = data.ws_url;
+                        localStorage.setItem("deriv_ws_url", data.ws_url);
+                    } else {
+                        console.error("Failed to get a fresh OTP URL for reconnect:", data);
+                        wsUrl = PUBLIC_WS_URL; // fall back to ticks-only rather than retry a dead URL
+                    }
+                } else {
+                    wsUrl = PUBLIC_WS_URL;
+                }
+            } catch (err) {
+                console.error("Error refreshing OTP before reconnect:", err);
+                wsUrl = PUBLIC_WS_URL;
+            }
+        }
+    }
+
+    socket = new WebSocket(wsUrl);
+    isAuthedConnection = (wsUrl !== PUBLIC_WS_URL);
     socket.onopen = handleSocketOpen;
     socket.onmessage = handleSocketMessage;
     socket.onerror = handleSocketError;
