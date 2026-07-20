@@ -1011,19 +1011,23 @@ function handleSocketClose() {
     }
 }
 
+let usedInitialAuthedUrl = false; // tracks whether the login-issued OTP URL has been spent yet
+
 async function connectSocket() {
     let wsUrl = PUBLIC_WS_URL;
 
     if (authedWsUrl) {
-        if (!hasConnectedOnce) {
-            // First connection ever this page load — the URL from login is
-            // guaranteed fresh, use it directly.
+        if (!hasConnectedOnce && !usedInitialAuthedUrl) {
+            // First-ever attempt this page load AND we haven't tried the
+            // login-issued URL yet — use it directly.
             wsUrl = authedWsUrl;
+            usedInitialAuthedUrl = true;
         } else {
-            // Reconnecting: the original OTP URL is one-time-use and has
-            // already been consumed (or expired) — reusing it here was the
-            // actual bug, causing every reconnect attempt to fail forever
-            // against the same dead URL. Fetch a brand new one instead.
+            // Any attempt after that (a real reconnect, OR a retry after the
+            // very first attempt failed) must not reuse the same OTP URL —
+            // OTP URLs are one-time-use, so reusing a dead one here is what
+            // caused every retry to fail forever against the same URL.
+            // Fetch a brand new one instead.
             try {
                 const account = JSON.parse(localStorage.getItem("deriv_account") || "null");
                 const accessToken = localStorage.getItem("deriv_token");
