@@ -164,51 +164,6 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
     realBtn.addEventListener("click", () => switchAccount("real"));
 })();
 
-// --- Reset Demo Balance ---------------------------------------------------
-document.getElementById("resetDemoBtn").addEventListener("click", () => {
-    const note = document.getElementById("resetDemoNote");
-    const accounts = JSON.parse(localStorage.getItem("deriv_accounts") || "[]");
-    const accessToken = localStorage.getItem("deriv_token");
-    const demoAccount = accounts.find(a => a.account_type === "demo");
-
-    if (!demoAccount) {
-        note.textContent = "No demo account found on this login.";
-        return;
-    }
-    if (!accessToken) {
-        note.textContent = "Please log in first.";
-        return;
-    }
-    if (!confirm("Reset your demo balance back to the default? This can't be undone.")) {
-        return;
-    }
-
-    note.textContent = "Resetting...";
-
-    fetch("/api/reset-demo", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ access_token: accessToken, account_id: demoAccount.account_id })
-    })
-        .then(r => r.json())
-        .then(data => {
-            if (!data.success) {
-                note.textContent = "Reset failed — see console.";
-                console.error(data);
-                return;
-            }
-            note.textContent = "✅ Demo balance reset.";
-            logEvent("Demo balance reset");
-            // Balance display updates automatically via the live subscription,
-            // but nudge it in case this account isn't the currently active one.
-            if (typeof loadDerivStatement === "function") loadDerivStatement();
-        })
-        .catch(err => {
-            note.textContent = "Reset failed — see console.";
-            console.error(err);
-        });
-});
-
 // --- Daily P&L / win rate / trade count (persists per calendar day) ------
 function todayStatsKey() {
     return "stats:" + new Date().toISOString().slice(0, 10);
@@ -378,7 +333,6 @@ function drawChart() {
 
 const PUBLIC_WS_URL = "wss://api.derivws.com/trading/v1/options/ws/public";
 const authedWsUrl = localStorage.getItem("deriv_ws_url");
-let isAuthedConnection = false; // reflects the CURRENT socket, set fresh in connectSocket()
 
 let socket; // reassigned by connectSocket() on reconnect — declared here, created below
 let reconnectAttempts = 0;
@@ -660,8 +614,8 @@ function addToHistory(poc) {
 
 function handleSocketOpen() {
 
-    console.log("Connected to:", isAuthedConnection ? "authenticated socket" : "public socket");
-    logEvent(isAuthedConnection ? "Connected to authenticated socket" : "Connected to public socket");
+    console.log("Connected to:", authedWsUrl ? "authenticated socket" : "public socket");
+    logEvent(authedWsUrl ? "Connected to authenticated socket" : "Connected to public socket");
 
     hideLoadingScreen();
 
@@ -671,7 +625,7 @@ function handleSocketOpen() {
     hasConnectedOnce = true;
     reconnectAttempts = 0;
 
-    if (isAuthedConnection) {
+    if (authedWsUrl) {
 
         const account = JSON.parse(localStorage.getItem("deriv_account") || "null");
 
@@ -703,16 +657,6 @@ function handleSocketOpen() {
             .catch((err) => console.error("Portfolio load failed:", err));
 
         if (typeof startDerivHistoryPolling === "function") startDerivHistoryPolling();
-
-    } else if (authedWsUrl) {
-        // We have a login on this browser, but this particular connection
-        // attempt couldn't get a fresh authenticated session (OTP refresh
-        // failed) and fell back to the public, ticks-only socket. Don't
-        // leave the button stuck on "Reconnecting" forever with no way out.
-        const loginBtn = document.getElementById("loginBtn");
-        loginBtn.textContent = "⚠️ Reconnect failed — refresh page";
-        loginBtn.disabled = false;
-        logEvent("Could not restore authenticated session — refresh the page to log in again.");
     }
 
     safeSend({ ticks: currentSymbol, subscribe: 1 });
@@ -972,18 +916,6 @@ function handleSocketClose() {
     document.getElementById("status").textContent = "🟠 Disconnected";
     logEvent("Disconnected");
 
-    // The button was only ever set once on the first successful login and
-    // never reset — it kept showing "Logged In" even while fully
-    // disconnected. Auto-reconnect will silently restore the real session,
-    // so this shows "Reconnecting" rather than "Login with Deriv" (no need
-    // to click anything — clicking it would trigger a needless fresh OAuth
-    // flow when the existing token is still perfectly valid).
-    const loginBtn = document.getElementById("loginBtn");
-    if (authedWsUrl) {
-        loginBtn.textContent = "🔄 Reconnecting...";
-        loginBtn.disabled = true;
-    }
-
     // Any request still awaiting a response will never get one on this
     // dead socket — reject them so callers (trades, bot loops) can react
     // instead of hanging indefinitely.
@@ -1011,50 +943,8 @@ function handleSocketClose() {
     }
 }
 
-async function connectSocket() {
-    let wsUrl = PUBLIC_WS_URL;
-
-    if (authedWsUrl) {
-        if (!hasConnectedOnce) {
-            // First connection ever this page load — the URL from login is
-            // guaranteed fresh, use it directly.
-            wsUrl = authedWsUrl;
-        } else {
-            // Reconnecting: the original OTP URL is one-time-use and has
-            // already been consumed (or expired) — reusing it here was the
-            // actual bug, causing every reconnect attempt to fail forever
-            // against the same dead URL. Fetch a brand new one instead.
-            try {
-                const account = JSON.parse(localStorage.getItem("deriv_account") || "null");
-                const accessToken = localStorage.getItem("deriv_token");
-
-                if (account && accessToken) {
-                    const resp = await fetch("/api/otp", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ access_token: accessToken, account_id: account.account_id })
-                    });
-                    const data = await resp.json();
-
-                    if (data.ws_url) {
-                        wsUrl = data.ws_url;
-                        localStorage.setItem("deriv_ws_url", data.ws_url);
-                    } else {
-                        console.error("Failed to get a fresh OTP URL for reconnect:", data);
-                        wsUrl = PUBLIC_WS_URL; // fall back to ticks-only rather than retry a dead URL
-                    }
-                } else {
-                    wsUrl = PUBLIC_WS_URL;
-                }
-            } catch (err) {
-                console.error("Error refreshing OTP before reconnect:", err);
-                wsUrl = PUBLIC_WS_URL;
-            }
-        }
-    }
-
-    socket = new WebSocket(wsUrl);
-    isAuthedConnection = (wsUrl !== PUBLIC_WS_URL);
+function connectSocket() {
+    socket = new WebSocket(authedWsUrl || PUBLIC_WS_URL);
     socket.onopen = handleSocketOpen;
     socket.onmessage = handleSocketMessage;
     socket.onerror = handleSocketError;
