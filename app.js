@@ -1011,49 +1011,33 @@ function handleSocketClose() {
     }
 }
 
-let usedInitialAuthedUrl = false; // tracks whether the login-issued OTP URL has been spent yet
-
 async function connectSocket() {
     let wsUrl = PUBLIC_WS_URL;
 
-    if (authedWsUrl) {
-        if (!hasConnectedOnce && !usedInitialAuthedUrl) {
-            // First-ever attempt this page load AND we haven't tried the
-            // login-issued URL yet — use it directly.
-            wsUrl = authedWsUrl;
-            usedInitialAuthedUrl = true;
-        } else {
-            // Any attempt after that (a real reconnect, OR a retry after the
-            // very first attempt failed) must not reuse the same OTP URL —
-            // OTP URLs are one-time-use, so reusing a dead one here is what
-            // caused every retry to fail forever against the same URL.
-            // Fetch a brand new one instead.
-            try {
-                const account = JSON.parse(localStorage.getItem("deriv_account") || "null");
-                const accessToken = localStorage.getItem("deriv_token");
+    const account = JSON.parse(localStorage.getItem("deriv_account") || "null");
+    const accessToken = localStorage.getItem("deriv_token");
 
-                if (account && accessToken) {
-                    const resp = await fetch("/api/otp", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ access_token: accessToken, account_id: account.account_id })
-                    });
-                    const data = await resp.json();
+    if (account && accessToken) {
+        // Never trust a URL already sitting in storage — OTP URLs are
+        // one-time-use and can be stale even on the very first load of the
+        // page (e.g. if it's been a while since you last logged in).
+        // Always fetch a brand new one before every connection attempt.
+        try {
+            const resp = await fetch("/api/otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ access_token: accessToken, account_id: account.account_id })
+            });
+            const data = await resp.json();
 
-                    if (data.ws_url) {
-                        wsUrl = data.ws_url;
-                        localStorage.setItem("deriv_ws_url", data.ws_url);
-                    } else {
-                        console.error("Failed to get a fresh OTP URL for reconnect:", data);
-                        wsUrl = PUBLIC_WS_URL; // fall back to ticks-only rather than retry a dead URL
-                    }
-                } else {
-                    wsUrl = PUBLIC_WS_URL;
-                }
-            } catch (err) {
-                console.error("Error refreshing OTP before reconnect:", err);
-                wsUrl = PUBLIC_WS_URL;
+            if (data.ws_url) {
+                wsUrl = data.ws_url;
+                localStorage.setItem("deriv_ws_url", data.ws_url);
+            } else {
+                console.error("Failed to get a fresh OTP URL:", data);
             }
+        } catch (err) {
+            console.error("Error fetching OTP URL:", err);
         }
     }
 
