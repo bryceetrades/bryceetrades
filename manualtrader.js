@@ -31,6 +31,10 @@ const DIRECTION_OPTIONS = {
     evenodd: [
         { value: "DIGITEVEN", label: "Even" },
         { value: "DIGITODD",  label: "Odd" }
+    ],
+    runs: [
+        { value: "RUNHIGH", label: "Only Ups" },
+        { value: "RUNLOW",  label: "Only Downs" }
     ]
 };
 
@@ -47,6 +51,8 @@ function refreshTradeForm() {
     });
 
     const isDigitContract = ["matchdiff", "overunder", "evenodd"].includes(category);
+    // Only Ups/Only Downs are also tick-count based, same duration restriction as digit contracts.
+    const isTickOnlyContract = isDigitContract || category === "runs";
 
     document.getElementById("predictionRow").style.display =
         (category === "matchdiff" || category === "overunder") ? "block" : "none";
@@ -54,11 +60,12 @@ function refreshTradeForm() {
     document.getElementById("barrierRow").style.display =
         (category === "callput_barrier") ? "block" : "none";
 
-    // Digit contracts (Matches/Differs, Over/Under, Even/Odd) only allow
-    // tick-based duration on Deriv — lock the unit selector to reflect that.
+    // Digit contracts (Matches/Differs, Over/Under, Even/Odd) and Only
+    // Ups/Only Downs only allow tick-based duration on Deriv — lock the
+    // unit selector to reflect that.
     const durationUnitSelect = document.getElementById("durationUnit");
-    durationUnitSelect.disabled = isDigitContract;
-    if (isDigitContract) durationUnitSelect.value = "t";
+    durationUnitSelect.disabled = isTickOnlyContract;
+    if (isTickOnlyContract) durationUnitSelect.value = "t";
 }
 
 document.getElementById("tradeCategory").addEventListener("change", refreshTradeForm);
